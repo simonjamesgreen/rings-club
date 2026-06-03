@@ -6,7 +6,7 @@
   <title>Rings Club 🏆</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --bg: #080810; --card: #12121e; --card2: #1a1a2e; --border: #2a2a3e;
       --pink: #FF0050; --green: #91FF00; --blue: #00FFF0; --yellow: #FFD700;
@@ -93,6 +93,8 @@
     .text-muted { color: var(--muted); } .text-sm { font-size: 13px; } .text-center { text-align: center; }
     .bold { font-weight: 700; } .mb-8 { margin-bottom: 8px; } .mb-16 { margin-bottom: 16px; }
     .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .forgot-link { display: block; text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; cursor: pointer; transition: color 0.2s; }
+    .forgot-link:hover { color: var(--blue); }
   </style>
 </head>
 <body>
@@ -133,6 +135,39 @@
       <div style="height:8px"></div>
       <button class="btn btn-primary" onclick="handleSignup()">Create Account</button>
     </div>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD -->
+<div id="screen-forgot" class="screen">
+  <div class="auth-hero">
+    <h1 style="font-size:32px">🔑 <span style="color:var(--pink)">Forgot</span><br><span style="color:var(--green)">Password?</span></h1>
+    <p>No worries — we'll send you a reset link.</p>
+  </div>
+  <div class="container">
+    <div id="forgot-msg"></div>
+    <label>Email</label>
+    <input type="email" id="forgot-email" placeholder="you@example.com">
+    <div style="height:8px"></div>
+    <button class="btn btn-primary" onclick="handleForgotPassword()">Send Reset Link 📧</button>
+    <span class="forgot-link" onclick="showScreen('auth')">← Back to login</span>
+  </div>
+</div>
+
+<!-- RESET PASSWORD -->
+<div id="screen-reset" class="screen">
+  <div class="auth-hero">
+    <h1 style="font-size:32px">🔒 <span style="color:var(--pink)">New</span><br><span style="color:var(--green)">Password</span></h1>
+    <p>Choose a strong new password.</p>
+  </div>
+  <div class="container">
+    <div id="reset-msg"></div>
+    <label>New Password</label>
+    <input type="password" id="reset-password" placeholder="At least 6 characters">
+    <label>Confirm New Password</label>
+    <input type="password" id="reset-confirm" placeholder="••••••••">
+    <div style="height:8px"></div>
+    <button class="btn btn-primary" onclick="handleResetPassword()">Set New Password ✅</button>
   </div>
 </div>
 
@@ -211,19 +246,25 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null, currentProfile = null, currentLeague = null, currentMembers = [];
 
-// ── INIT ──────────────────────────────────────────────────
 async function init() {
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      showScreen('reset');
+    } else if (event === 'SIGNED_IN') {
+      const resetActive = document.getElementById('screen-reset')?.classList.contains('active');
+      if (resetActive) return;
+      currentUser = session.user;
+      await loadProfile();
+    } else if (event === 'SIGNED_OUT') {
+      currentUser = null; currentProfile = null; currentLeague = null;
+      showScreen('auth');
+    }
+  });
   const { data: { session } } = await db.auth.getSession();
   if (session) { currentUser = session.user; await loadProfile(); }
   else showScreen('auth');
-
-  db.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') { currentUser = session.user; await loadProfile(); }
-    else if (event === 'SIGNED_OUT') { currentUser = null; currentProfile = null; currentLeague = null; showScreen('auth'); }
-  });
 }
 
-// ── AUTH ──────────────────────────────────────────────────
 function switchAuthTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='signup'&&i===1)));
   document.getElementById('auth-login').style.display = tab === 'login' ? 'block' : 'none';
@@ -250,7 +291,31 @@ async function handleSignup() {
 
 async function handleSignOut() { await db.auth.signOut(); }
 
-// ── PROFILE ───────────────────────────────────────────────
+async function handleForgotPassword() {
+  const email = v('forgot-email');
+  if (!email) return msg('forgot-msg', 'Please enter your email address', 'error');
+  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: 'https://rings-club.com' });
+  if (error) msg('forgot-msg', error.message, 'error');
+  else { msg('forgot-msg', '📧 Reset link sent! Check your inbox.', 'success'); document.getElementById('forgot-email').value = ''; }
+}
+
+async function handleResetPassword() {
+  const password = v('reset-password'), confirm = v('reset-confirm');
+  if (!password) return msg('reset-msg', 'Enter a new password', 'error');
+  if (password.length < 6) return msg('reset-msg', 'Password must be at least 6 characters', 'error');
+  if (password !== confirm) return msg('reset-msg', 'Passwords do not match', 'error');
+  const { error } = await db.auth.updateUser({ password });
+  if (error) msg('reset-msg', error.message, 'error');
+  else {
+    msg('reset-msg', '✅ Password updated! Taking you to the app...', 'success');
+    setTimeout(async () => {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) { currentUser = session.user; await loadProfile(); }
+      else showScreen('auth');
+    }, 2000);
+  }
+}
+
 async function loadProfile() {
   const { data } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
   if (data) { currentProfile = data; showScreen('home'); loadHomeScreen(); }
@@ -268,21 +333,17 @@ async function handleSetUsername() {
   } else { currentProfile = { id: currentUser.id, username }; showScreen('home'); loadHomeScreen(); }
 }
 
-// ── HOME ──────────────────────────────────────────────────
 async function loadHomeScreen() {
   const today = new Date(), end = new Date(today);
   end.setDate(end.getDate() + 27);
   document.getElementById('create-start').value = fmtDate(today);
   document.getElementById('create-end').value = fmtDate(end);
-
   const { data: memberships } = await db.from('league_members').select('league_id').eq('user_id', currentUser.id);
   const el = document.getElementById('home-leagues');
   if (!memberships || !memberships.length) { el.innerHTML = ''; return; }
-
   const ids = memberships.map(m => m.league_id);
   const { data: leagues } = await db.from('leagues').select('*').in('id', ids);
   if (!leagues || !leagues.length) { el.innerHTML = ''; return; }
-
   el.innerHTML = `
     <div class="card-title" style="margin-bottom:10px">Your Leagues</div>
     ${leagues.map(l => `
@@ -292,8 +353,7 @@ async function loadHomeScreen() {
           <div class="league-item-dates">${fmtDisplay(l.game_start)} → ${fmtDisplay(l.game_end)}</div>
         </div>
         <span style="color:var(--muted);font-size:20px">›</span>
-      </div>
-    `).join('')}`;
+      </div>`).join('')}`;
 }
 
 async function handleCreateLeague() {
@@ -320,12 +380,9 @@ async function handleJoinLeague() {
     const { error } = await db.from('league_members').insert({ league_id: league.id, user_id: currentUser.id, clouds: 4 });
     if (error) return msg('join-msg', error.message, 'error');
     openLeague(league.id);
-  } catch (e) {
-    msg('join-msg', e.message || 'Something went wrong — please try again', 'error');
-  }
+  } catch (e) { msg('join-msg', e.message || 'Something went wrong', 'error'); }
 }
 
-// ── LEAGUE ────────────────────────────────────────────────
 async function openLeague(leagueId) {
   showScreen('league');
   const { data: league } = await db.from('leagues').select('*').eq('id', leagueId).single();
@@ -341,7 +398,6 @@ async function openLeague(leagueId) {
 
 function goHome() { currentLeague = null; showScreen('home'); loadHomeScreen(); }
 
-// ── TABS ──────────────────────────────────────────────────
 const ADMIN_EMAIL = 'simonjamesgreen@gmail.com';
 function isAdmin() { return currentUser?.email === ADMIN_EMAIL; }
 
@@ -349,9 +405,7 @@ function setupAdminTab() {
   const tabsEl = document.getElementById('league-tabs');
   if (isAdmin() && !document.getElementById('admin-tab-btn')) {
     const btn = document.createElement('button');
-    btn.className = 'tab';
-    btn.id = 'admin-tab-btn';
-    btn.textContent = '⚙️ Admin';
+    btn.className = 'tab'; btn.id = 'admin-tab-btn'; btn.textContent = '⚙️ Admin';
     btn.onclick = () => switchTab('admin');
     tabsEl.appendChild(btn);
   }
@@ -370,7 +424,6 @@ function switchTab(tab) {
   if (tab === 'admin') renderAdmin();
 }
 
-// ── LEADERBOARD ───────────────────────────────────────────
 async function renderLeaderboard() {
   const el = document.getElementById('leaderboard-content');
   el.innerHTML = loading();
@@ -380,9 +433,7 @@ async function renderLeaderboard() {
   ]);
   const board = calcLeaderboard(entries || [], logs || [], currentMembers);
   const today = fmtDate(new Date());
-
   if (!board.length) { el.innerHTML = empty('📊', 'No entries yet. Be the first to log!'); return; }
-
   el.innerHTML = `<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div class="section-title">Standings</div>
@@ -406,17 +457,13 @@ async function renderLeaderboard() {
   </div>`;
 }
 
-// ── SUBMIT ────────────────────────────────────────────────
 async function renderSubmit() {
   const el = document.getElementById('submit-content');
   el.innerHTML = loading();
-
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
   const entryDate = fmtDate(yesterday);
-
   const { data: existing } = await db.from('daily_entries').select('*')
     .eq('league_id', currentLeague.id).eq('user_id', currentUser.id).eq('entry_date', entryDate).single();
-
   if (existing) {
     el.innerHTML = `
       <div class="alert alert-success">✅ Already logged ${fmtDisplay(entryDate)}!</div>
@@ -429,7 +476,6 @@ async function renderSubmit() {
       </div>`;
     return;
   }
-
   el.innerHTML = `
     <div class="card">
       <div class="section-title" style="margin-bottom:4px">Log ${fmtDisplay(entryDate)}</div>
@@ -494,17 +540,12 @@ async function handleSubmit(entryDate) {
     exercise_closed: meetsMinimums, stand_closed: meetsMinimums, score
   });
   if (error) return msg('submit-msg', error.message, 'error');
-
   const pct = moveCalories / moveGoal;
   const qualifies = (pct >= 1.5 || exerciseMins >= 90) && meetsMinimums;
   if (qualifies) {
-    const { data: allEntries } = await db.from('daily_entries').select('*').eq('league_id', currentLeague.id);
-    const { data: allLogs } = await db.from('powerup_logs').select('*').eq('league_id', currentLeague.id);
-    const board = calcLeaderboard(allEntries || [], allLogs || [], currentMembers);
-    const isLastPlace = board.length > 1 && board[board.length - 1].userId === currentUser.id;
     const { data: members } = await db.from('league_members').select('*, profiles(username)').eq('league_id', currentLeague.id);
     currentMembers = members || [];
-    const earned = await awardShell(currentUser.id, currentLeague.id, isLastPlace);
+    const earned = await awardShell(currentUser.id, currentLeague.id);
     if (earned) {
       msg('submit-msg', `🎁 You earned a ${shellEmoji(earned)} ${earned.replace(/_/g, ' ')}!`, 'success');
       setTimeout(() => renderSubmit(), 3000);
@@ -514,11 +555,11 @@ async function handleSubmit(entryDate) {
   renderSubmit();
 }
 
-async function awardShell(userId, leagueId, isLastPlace) {
+async function awardShell(userId, leagueId) {
   const member = currentMembers.find(m => m.user_id === userId);
   if (!member) return null;
   const rand = Math.random() * 100;
-  const shell = rand < 24 ? 'mushroom' : rand < 48 ? 'red_shell' : rand < 72 ? 'green_shell' : rand < 96 ? 'blue_shell' : 'lightning';
+  const shell = rand < 24 ? 'mushroom' : rand < 48 ? 'red_shell' : rand < 72 ? 'green_shell' : rand < 96 ? 'blue_shell' : 'lightning';
   const dbKey = shellDbKey(shell);
   const { error } = await db.from('league_members').update({ [dbKey]: (member[dbKey] || 0) + 1 })
     .eq('league_id', leagueId).eq('user_id', userId);
@@ -526,30 +567,24 @@ async function awardShell(userId, leagueId, isLastPlace) {
   return shell;
 }
 
-// ── POWER-UPS ─────────────────────────────────────────────
 async function renderPowerups() {
   const el = document.getElementById('powerups-content');
   el.innerHTML = loading();
   const member = currentMembers.find(m => m.user_id === currentUser.id);
   if (!member) { el.innerHTML = empty('❓', 'Not a member of this league'); return; }
-
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
   const targetDate = fmtDate(yesterday);
-
   const { data: firedToday } = await db.from('powerup_logs').select('*')
     .eq('league_id', currentLeague.id).eq('attacker_id', currentUser.id).eq('entry_date', targetDate);
-
   const others = currentMembers.filter(m => m.user_id !== currentUser.id);
-
   const shells = [
     { key: 'mushroom', emoji: '🍄', name: 'Mushroom', desc: 'Double your score', count: member.mushrooms, needsTarget: false },
-    { key: 'red_shell', emoji: '🔴', name: 'Red Shell', desc: "Day leader gets −50%", count: member.red_shells, needsTarget: false },
+    { key: 'red_shell', emoji: '🔴', name: 'Red Shell', desc: "Person in front gets −50%", count: member.red_shells, needsTarget: false },
     { key: 'green_shell', emoji: '🟢', name: 'Green Shell', desc: "Chosen target gets −50%", count: member.green_shells, needsTarget: true },
     { key: 'lightning', emoji: '⚡', name: 'Lightning', desc: 'You ×2 • Everyone else −50%', count: member.lightnings, needsTarget: false },
-    { key: 'blue_shell', emoji: '🔵', name: 'Blue Shell', desc: "Match the day leader's score", count: member.blue_shells, needsTarget: false },
+    { key: 'blue_shell', emoji: '🔵', name: 'Blue Shell', desc: "Match the day winner's score", count: member.blue_shells, needsTarget: false },
     { key: 'cloud', emoji: '☁️', name: 'Cloud', desc: 'Free 100% day — no exercise needed', count: member.clouds, needsTarget: false },
   ];
-
   const firedCount = firedToday?.length || 0;
   el.innerHTML = `
     <div class="alert alert-info">⚡ Shells apply to <strong>${fmtDisplay(targetDate)}</strong> scores</div>
@@ -573,48 +608,40 @@ async function usePowerup(shellKey, targetDate) {
   const member = currentMembers.find(m => m.user_id === currentUser.id);
   const dbKey = shellDbKey(shellKey);
   if (!member || member[dbKey] <= 0) return;
-
   let targetId = null;
   if (shellKey === 'green_shell') {
     const el = document.getElementById(`tgt-${shellKey}`);
     targetId = el ? el.value : null;
     if (!targetId) return alert('Pick a target for Green Shell');
   }
-
   const { error: logErr } = await db.from('powerup_logs').insert({
     league_id: currentLeague.id, attacker_id: currentUser.id,
     target_id: targetId, shell_type: shellKey, entry_date: targetDate
   });
   if (logErr) return alert(logErr.message);
-
   await db.from('league_members').update({ [dbKey]: member[dbKey] - 1 })
     .eq('league_id', currentLeague.id).eq('user_id', currentUser.id);
-
   const { data: members } = await db.from('league_members').select('*, profiles(username)').eq('league_id', currentLeague.id);
   currentMembers = members || [];
   renderPowerups();
 }
 
-// ── ATTACK LOG ────────────────────────────────────────────
 async function renderLog() {
   const el = document.getElementById('log-content');
   el.innerHTML = loading();
   const { data: logs } = await db.from('powerup_logs').select('*').eq('league_id', currentLeague.id).order('created_at', { ascending: false });
   if (!logs || !logs.length) { el.innerHTML = empty('☮️', "No attacks yet. It's quiet... for now."); return; }
-
   const uname = (id) => currentMembers.find(m => m.user_id === id)?.profiles?.username || 'Unknown';
-
   const describe = (log) => {
     const a = uname(log.attacker_id), t = uname(log.target_id);
     if (log.shell_type === 'mushroom') return `🍄 <strong>${a}</strong> boosted themselves`;
-    if (log.shell_type === 'cloud') return `☁️ <strong>${a}</strong> used a Cloud shell`;
-    if (log.shell_type === 'red_shell') return `🔴 <strong>${a}</strong> fired a Red Shell at the leader`;
+    if (log.shell_type === 'cloud') return `☁️ <strong>${a}</strong> used a Cloud`;
+    if (log.shell_type === 'red_shell') return `🔴 <strong>${a}</strong> fired a Red Shell at the person in front`;
     if (log.shell_type === 'green_shell') return `🟢 <strong>${a}</strong> hit <strong>${t}</strong> with a Green Shell`;
     if (log.shell_type === 'lightning') return `⚡ <strong>${a}</strong> dropped Lightning on everyone`;
     if (log.shell_type === 'blue_shell') return `🔵 <strong>${a}</strong> launched the Blue Shell`;
     return `${shellEmoji(log.shell_type)} ${a} used a shell`;
   };
-
   el.innerHTML = `<div class="card">${logs.map(log => `
     <div class="log-row">
       <div>${describe(log)}</div>
@@ -622,7 +649,6 @@ async function renderLog() {
     </div>`).join('')}</div>`;
 }
 
-// ── INFO ──────────────────────────────────────────────────
 async function renderInfo() {
   const el = document.getElementById('info-content');
   el.innerHTML = `
@@ -647,18 +673,18 @@ async function renderInfo() {
         <strong style="color:var(--text)">Leaderboard</strong> = average % across all days played<br>
         <strong style="color:var(--text)">Earn a shell</strong> by hitting 150% move OR 90+ min exercise (minimums must be met)<br>
         <strong style="color:var(--blue)">300% move</strong> = immune to all incoming shells that day<br>
-        <strong style="color:var(--text)">Shell limit:</strong> you can only be hit by one shell per day — first one fired at you wins
+        <strong style="color:var(--text)">Shell limit:</strong> you can only be hit by one shell per day — first one fired wins
       </p>
     </div>
     <div class="card">
       <div class="card-title">Power-Ups</div>
       <div class="text-sm text-muted" style="line-height:2.2">
         🍄 <strong style="color:var(--text)">Mushroom</strong> — double your score<br>
-        🔴 <strong style="color:var(--text)">Red Shell</strong> — day leader gets −50%<br>
+        🔴 <strong style="color:var(--text)">Red Shell</strong> — person in front gets −50%<br>
         🟢 <strong style="color:var(--text)">Green Shell</strong> — chosen target gets −50%<br>
-        ⚡ <strong style="color:var(--text)">Lightning</strong> — you ×2, everyone else −50% <em style="color:var(--muted)">(earnable by last place only)</em><br>
-        🔵 <strong style="color:var(--text)">Blue Shell</strong> — match the day leader's score<br>
-        ☁️ <strong style="color:var(--text)">Cloud</strong> — free 100% day, no exercise needed <em style="color:var(--muted)">(max 4, everyone starts with 4)</em>
+        ⚡ <strong style="color:var(--text)">Lightning</strong> — you ×2, everyone else −50%<br>
+        🔵 <strong style="color:var(--text)">Blue Shell</strong> — match the day winner's score<br>
+        ☁️ <strong style="color:var(--text)">Cloud</strong> — free 100% day, no exercise needed <em style="color:var(--muted)">(everyone starts with 4, max 4)</em>
       </div>
     </div>`;
 }
@@ -667,7 +693,6 @@ async function simulateDay() {
   const date = document.getElementById('test-date')?.value;
   if (!date) return alert('Pick a date first');
   if (!confirm(`Generate random entries for all ${currentMembers.length} players for ${fmtDisplay(date)}?`)) return;
-
   const results = [];
   for (const m of currentMembers) {
     const move_goal = [400, 500, 600, 700][Math.floor(Math.random() * 4)];
@@ -676,119 +701,89 @@ async function simulateDay() {
     const stand_hours = Math.floor(8 + Math.random() * 8);
     const meetsMin = exercise_mins >= 30 && stand_hours >= 12;
     const score = meetsMin ? (move_calories / move_goal) * 100 : 0;
-
     const { error } = await db.from('daily_entries').upsert({
-      league_id: currentLeague.id,
-      user_id: m.user_id,
-      entry_date: date,
+      league_id: currentLeague.id, user_id: m.user_id, entry_date: date,
       move_calories, move_goal, exercise_mins, stand_hours,
       exercise_closed: meetsMin, stand_closed: meetsMin, score
     }, { onConflict: 'league_id,user_id,entry_date' });
-
-    results.push(`${m.profiles?.username}: ${score.toFixed(0)}% (ex:${exercise_mins}m st:${stand_hours}h)${error ? ' ❌' : ' ✅'}`);
+    results.push(`${m.profiles?.username}: ${score.toFixed(0)}%${error ? ' ❌' : ' ✅'}`);
   }
   alert('Results:\n' + results.join('\n'));
   renderAdmin();
 }
 
 async function simulateShell() {
-  if (currentMembers.length < 2) return alert('Need at least 2 players to fire shells');
+  if (currentMembers.length < 2) return alert('Need at least 2 players');
   const date = document.getElementById('test-date')?.value || fmtDate(new Date(Date.now() - 86400000));
-  const shells = ['mushroom','red_shell','green_shell','lightning','blue_shell','cloud'];
   const attacker = currentMembers[Math.floor(Math.random() * currentMembers.length)];
   const others = currentMembers.filter(m => m.user_id !== attacker.user_id);
   const target = others[Math.floor(Math.random() * others.length)];
-  const shell = shells[Math.floor(Math.random() * shells.length)];
+  const rand = Math.random() * 100;
+  const shell = rand < 24 ? 'mushroom' : rand < 48 ? 'red_shell' : rand < 72 ? 'green_shell' : rand < 96 ? 'blue_shell' : 'lightning';
   const dbKey = shellDbKey(shell);
-
-  if (!confirm(`${shellEmoji(shell)} ${attacker.profiles?.username} fires ${shell.replace('_',' ')} at ${target.profiles?.username} for ${fmtDisplay(date)}?`)) return;
-
+  if (!confirm(`${shellEmoji(shell)} ${attacker.profiles?.username} fires ${shell.replace(/_/g,' ')} at ${target.profiles?.username}?`)) return;
   const { error } = await db.from('powerup_logs').insert({
-    league_id: currentLeague.id,
-    attacker_id: attacker.user_id,
+    league_id: currentLeague.id, attacker_id: attacker.user_id,
     target_id: shell === 'green_shell' ? target.user_id : null,
-    shell_type: shell,
-    entry_date: date
+    shell_type: shell, entry_date: date
   });
-
   if (error) return alert('Error: ' + error.message);
-
   if (dbKey && attacker[dbKey] > 0) {
     await db.from('league_members').update({ [dbKey]: attacker[dbKey] - 1 })
       .eq('league_id', currentLeague.id).eq('user_id', attacker.user_id);
   }
-
   const { data: members } = await db.from('league_members').select('*, profiles(username)').eq('league_id', currentLeague.id);
   currentMembers = members || [];
-  alert(`✅ Shell fired!`);
+  alert('✅ Shell fired!');
   renderAdmin();
 }
 
 async function resetAllData() {
-  if (!confirm('⚠️ This will delete ALL entries and attacks for this league. Are you sure?')) return;
-  if (!confirm('Really sure? This cannot be undone.')) return;
-
+  if (!confirm('⚠️ Delete ALL entries and attacks for this league?')) return;
+  if (!confirm('Really sure? Cannot be undone.')) return;
   await db.from('powerup_logs').delete().eq('league_id', currentLeague.id);
   await db.from('daily_entries').delete().eq('league_id', currentLeague.id);
-
-  // Reset shell inventories to defaults
-  await db.from('league_members').update({
-    mushrooms: 0, red_shells: 0, green_shells: 0,
-    lightnings: 0, blue_shells: 0, clouds: 4
-  }).eq('league_id', currentLeague.id);
-
+  await db.from('league_members').update({ mushrooms: 0, red_shells: 0, green_shells: 0, lightnings: 0, blue_shells: 0, clouds: 4 }).eq('league_id', currentLeague.id);
   const { data: members } = await db.from('league_members').select('*, profiles(username)').eq('league_id', currentLeague.id);
   currentMembers = members || [];
-  alert('✅ All data reset. Ready for the real game!');
+  alert('✅ All data reset!');
   renderAdmin();
 }
 
-// ── ADMIN ─────────────────────────────────────────────────
 async function renderAdmin() {
   const el = document.getElementById('admin-content');
   if (!isAdmin()) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔒</div><p>Admin only</p></div>'; return; }
   el.innerHTML = loading();
-
   const [{ data: entries }, { data: logs }] = await Promise.all([
     db.from('daily_entries').select('*').eq('league_id', currentLeague.id).order('entry_date', { ascending: false }),
     db.from('powerup_logs').select('*').eq('league_id', currentLeague.id).order('created_at', { ascending: false })
   ]);
-
   const uname = (id) => currentMembers.find(m => m.user_id === id)?.profiles?.username || 'Unknown';
-
   el.innerHTML = `
-    <!-- TEST MODE -->
     <div class="card" style="border-color:var(--yellow)">
       <div class="section-title" style="margin-bottom:4px">🧪 Test Mode</div>
-      <p class="text-muted text-sm" style="margin-bottom:16px">Simulate game activity to test everything works</p>
-
-      <label>Simulate entries for date</label>
+      <p class="text-muted text-sm" style="margin-bottom:16px">Simulate game activity</p>
+      <label>Date</label>
       <input type="date" id="test-date" value="${fmtDate(new Date(Date.now() - 86400000))}" style="margin-bottom:12px">
-
-      <button class="btn btn-secondary" style="margin-bottom:8px" onclick="simulateDay()">🎲 Generate Random Entries for All Players</button>
+      <button class="btn btn-secondary" style="margin-bottom:8px" onclick="simulateDay()">🎲 Generate Random Entries</button>
       <button class="btn btn-secondary" style="margin-bottom:8px" onclick="simulateShell()">💥 Fire a Random Shell</button>
-      <button class="btn" style="background:var(--pink);color:white;margin-bottom:0" onclick="resetAllData()">🗑️ Reset All League Data</button>
+      <button class="btn" style="background:var(--pink);color:white;margin-bottom:0" onclick="resetAllData()">🗑️ Reset All Data</button>
     </div>
-
-    <!-- SHELL INVENTORY -->
     <div class="card">
       <div class="section-title" style="margin-bottom:16px">🎮 Shell Inventory</div>
       ${currentMembers.map(m => `
         <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
           <div class="bold" style="margin-bottom:10px">${m.profiles?.username || 'Unknown'}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-            ${[['mushrooms','🍄'],['red_shells','🔴'],['green_shells','🟢'],['lightnings','⚡'],['blue_shells','🔵'],['clouds','☁️']].map(([key, emoji]) => `
+            ${[['mushrooms','🍄'],['red_shells','🔴'],['green_shells','🟢'],['lightnings','⚡'],['blue_shells','🔵'],['clouds','☁️']].map(([key,emoji]) => `
               <div style="text-align:center">
                 <div style="font-size:18px">${emoji}</div>
-                <input type="number" min="0" max="99" value="${m[key]}" id="inv-${m.user_id}-${key}"
-                  style="width:100%;text-align:center;padding:6px;font-size:14px;margin-bottom:0">
+                <input type="number" min="0" max="99" value="${m[key]}" id="inv-${m.user_id}-${key}" style="width:100%;text-align:center;padding:6px;font-size:14px;margin-bottom:0">
               </div>`).join('')}
           </div>
           <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="saveInventory('${m.user_id}')">Save</button>
         </div>`).join('')}
     </div>
-
-    <!-- DAILY ENTRIES -->
     <div class="card">
       <div class="section-title" style="margin-bottom:16px">📊 Daily Entries</div>
       ${!entries || !entries.length ? '<p class="text-muted text-sm">No entries yet</p>' : entries.map(e => `
@@ -802,15 +797,13 @@ async function renderAdmin() {
             <div><label>Goal</label><input type="number" id="e-goal-${e.id}" value="${e.move_goal}" style="margin-bottom:0"></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div><label>Exercise (mins)</label><input type="number" id="e-exmins-${e.id}" value="${e.exercise_mins ?? 0}" min="0" style="margin-bottom:0"></div>
-            <div><label>Stand (hrs)</label><input type="number" id="e-sthrs-${e.id}" value="${e.stand_hours ?? 0}" min="0" max="24" style="margin-bottom:0"></div>
+            <div><label>Exercise (mins)</label><input type="number" id="e-exmins-${e.id}" value="${e.exercise_mins ?? 0}" style="margin-bottom:0"></div>
+            <div><label>Stand (hrs)</label><input type="number" id="e-sthrs-${e.id}" value="${e.stand_hours ?? 0}" style="margin-bottom:0"></div>
           </div>
-          <div><label>Score Override</label><input type="number" step="0.1" id="e-score-${e.id}" value="${e.score}" style="margin-bottom:8px"></div>
-          <button class="btn btn-secondary btn-sm" onclick="saveEntry('${e.id}')">Save Entry</button>
+          <div><label>Score</label><input type="number" step="0.1" id="e-score-${e.id}" value="${e.score}" style="margin-bottom:8px"></div>
+          <button class="btn btn-secondary btn-sm" onclick="saveEntry('${e.id}')">Save</button>
         </div>`).join('')}
     </div>
-
-    <!-- POWERUP LOGS -->
     <div class="card">
       <div class="section-title" style="margin-bottom:16px">⚔️ Attack Log</div>
       ${!logs || !logs.length ? '<p class="text-muted text-sm">No attacks yet</p>' : logs.map(log => `
@@ -831,12 +824,11 @@ async function saveInventory(userId) {
     const val = parseInt(document.getElementById(`inv-${userId}-${key}`)?.value);
     if (!isNaN(val)) update[key] = val;
   }
-  const { error } = await db.from('league_members').update(update)
-    .eq('league_id', currentLeague.id).eq('user_id', userId);
+  const { error } = await db.from('league_members').update(update).eq('league_id', currentLeague.id).eq('user_id', userId);
   if (error) return alert('Error: ' + error.message);
   const { data: members } = await db.from('league_members').select('*, profiles(username)').eq('league_id', currentLeague.id);
   currentMembers = members || [];
-  alert('✅ Inventory saved!');
+  alert('✅ Saved!');
 }
 
 async function saveEntry(entryId) {
@@ -845,30 +837,26 @@ async function saveEntry(entryId) {
   const exercise_mins = parseInt(document.getElementById(`e-exmins-${entryId}`)?.value) || 0;
   const stand_hours = parseInt(document.getElementById(`e-sthrs-${entryId}`)?.value) || 0;
   const score = parseFloat(document.getElementById(`e-score-${entryId}`)?.value);
-  const exercise_closed = exercise_mins >= 30;
-  const stand_closed = stand_hours >= 12;
-  const { error } = await db.from('daily_entries').update({ move_calories: calories, move_goal: goal, exercise_mins, stand_hours, exercise_closed, stand_closed, score }).eq('id', entryId);
+  const { error } = await db.from('daily_entries').update({ move_calories: calories, move_goal: goal, exercise_mins, stand_hours, exercise_closed: exercise_mins >= 30, stand_closed: stand_hours >= 12, score }).eq('id', entryId);
   if (error) return alert('Error: ' + error.message);
-  alert('✅ Entry saved!');
+  alert('✅ Saved!');
 }
 
 async function deletePowerup(logId) {
-  if (!confirm('Delete this attack? This will restore the shell to the player.')) return;
+  if (!confirm('Delete this attack and restore the shell?')) return;
   const { data: log } = await db.from('powerup_logs').select('*').eq('id', logId).single();
   if (!log) return;
   const dbKey = shellDbKey(log.shell_type);
   const member = currentMembers.find(m => m.user_id === log.attacker_id);
   await db.from('powerup_logs').delete().eq('id', logId);
   if (member && dbKey) {
-    await db.from('league_members').update({ [dbKey]: (member[dbKey] || 0) + 1 })
-      .eq('league_id', currentLeague.id).eq('user_id', log.attacker_id);
+    await db.from('league_members').update({ [dbKey]: (member[dbKey] || 0) + 1 }).eq('league_id', currentLeague.id).eq('user_id', log.attacker_id);
   }
   const { data: members } = await db.from('league_members').select('*, profiles(username)').eq('league_id', currentLeague.id);
   currentMembers = members || [];
   renderAdmin();
 }
 
-// ── SCORING ENGINE ────────────────────────────────────────
 function calcLeaderboard(entries, logs, members) {
   const byDate = {}, entriesByDate = {};
   for (const e of entries) {
@@ -892,14 +880,11 @@ function calcLeaderboard(entries, logs, members) {
 }
 
 function applyPowerups(scores, logs, entries) {
-  // 300% move = immune to incoming shells
   const immune = new Set();
   for (const e of entries) {
     if (e.move_goal > 0 && e.move_calories / e.move_goal >= 3.0) immune.add(e.user_id);
   }
-  // Each player can only be impacted by one incoming shell per day (first fired wins)
   const impacted = new Set();
-  // Process in chronological order
   const sorted = [...logs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   for (const p of sorted) {
     const attacker = p.attacker_id;
@@ -908,17 +893,15 @@ function applyPowerups(scores, logs, entries) {
     } else if (p.shell_type === 'cloud') {
       scores[attacker] = 100;
     } else if (p.shell_type === 'blue_shell') {
-      const otherScores = Object.entries(scores).filter(([uid]) => uid !== attacker).map(([, s]) => s);
+      const otherScores = Object.entries(scores).filter(([uid]) => uid !== attacker).map(([,s]) => s);
       if (otherScores.length) scores[attacker] = Math.max(...otherScores);
     } else if (p.shell_type === 'lightning') {
       if (scores[attacker] !== undefined) scores[attacker] *= 2;
       for (const uid of Object.keys(scores)) {
-        if (uid !== attacker && !impacted.has(uid) && !immune.has(uid)) {
-          scores[uid] *= 0.5; impacted.add(uid);
-        }
+        if (uid !== attacker && !impacted.has(uid) && !immune.has(uid)) { scores[uid] *= 0.5; impacted.add(uid); }
       }
     } else if (p.shell_type === 'red_shell') {
-      const leader = Object.entries(scores).filter(([uid]) => uid !== attacker).sort(([, a], [, b]) => b - a)[0];
+      const leader = Object.entries(scores).filter(([uid]) => uid !== attacker).sort(([,a],[,b]) => b - a)[0];
       if (leader) {
         const [targetId] = leader;
         if (!impacted.has(targetId) && !immune.has(targetId)) { scores[targetId] *= 0.5; impacted.add(targetId); }
@@ -933,7 +916,6 @@ function applyPowerups(scores, logs, entries) {
   return scores;
 }
 
-// ── HELPERS ───────────────────────────────────────────────
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');

@@ -6,7 +6,7 @@
   <title>Rings Club 🏆</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box;
     :root {
       --bg: #080810; --card: #12121e; --card2: #1a1a2e; --border: #2a2a3e;
       --pink: #FF0050; --green: #91FF00; --blue: #00FFF0; --yellow: #FFD700;
@@ -517,10 +517,8 @@ async function handleSubmit(entryDate) {
 async function awardShell(userId, leagueId, isLastPlace) {
   const member = currentMembers.find(m => m.user_id === userId);
   if (!member) return null;
-  const pool = ['mushroom', 'red_shell', 'green_shell', 'blue_shell'];
-  if ((member.clouds || 0) < 4) pool.push('cloud');
-  if (isLastPlace) pool.push('lightning');
-  const shell = pool[Math.floor(Math.random() * pool.length)];
+  const rand = Math.random() * 100;
+  const shell = rand < 24 ? 'mushroom' : rand < 48 ? 'red_shell' : rand < 72 ? 'green_shell' : rand < 96 ? 'blue_shell' : 'lightning';
   const dbKey = shellDbKey(shell);
   const { error } = await db.from('league_members').update({ [dbKey]: (member[dbKey] || 0) + 1 })
     .eq('league_id', leagueId).eq('user_id', userId);

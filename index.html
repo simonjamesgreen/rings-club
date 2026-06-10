@@ -432,8 +432,7 @@ async function renderLeaderboard() {
     db.from('powerup_logs').select('*').eq('league_id', currentLeague.id)
   ]);
   const board = calcLeaderboard(entries || [], logs || [], currentMembers);
-  const todayRaw = new Date(); todayRaw.setDate(todayRaw.getDate() - 1);
-  const today = fmtDate(todayRaw);
+  const today = fmtDate(new Date());
   if (!board.length) { el.innerHTML = empty('📊', 'No entries yet. Be the first to log!'); return; }
   el.innerHTML = `<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -543,19 +542,13 @@ async function handleSubmit(entryDate) {
   if (error) return msg('submit-msg', error.message, 'error');
   const pct = moveCalories / moveGoal;
   const qualifies = (pct >= 1.5 || exerciseMins >= 90) && meetsMinimums;
- if (qualifies) {
+  if (qualifies) {
     const { data: members } = await db.from('league_members').select('*, profiles(username)').eq('league_id', currentLeague.id);
     currentMembers = members || [];
     const earned = await awardShell(currentUser.id, currentLeague.id);
     if (earned) {
-      const el = document.getElementById('submit-content');
-      el.innerHTML = `
-        <div class="alert alert-success" style="text-align:center;padding:24px">
-          <div style="font-size:48px;margin-bottom:12px">${shellEmoji(earned)}</div>
-          <div style="font-size:18px;font-weight:800;margin-bottom:8px">You earned a ${earned.replace(/_/g, ' ')}!</div>
-          <div class="text-muted text-sm" style="margin-bottom:20px">Added to your inventory.</div>
-          <button class="btn btn-primary" onclick="renderSubmit()">Continue ✅</button>
-        </div>`;
+      msg('submit-msg', `🎁 You earned a ${shellEmoji(earned)} ${earned.replace(/_/g, ' ')}!`, 'success');
+      setTimeout(() => renderSubmit(), 3000);
       return;
     }
   }
@@ -608,28 +601,6 @@ async function renderPowerups() {
             <button class="btn btn-sm btn-primary" onclick="usePowerup('${s.key}','${targetDate}')">Use</button>
           ` : `<div class="text-muted text-sm">Empty</div>`}
         </div>`).join('')}
-    </div>
-    <div class="card" style="margin-top:16px">
-      <div class="card-title">Team Inventory</div>
-      ${currentMembers.map(m => {
-        const isYou = m.user_id === currentUser.id;
-        const items = [
-          { emoji: '🍄', count: m.mushrooms },
-          { emoji: '🔴', count: m.red_shells },
-          { emoji: '🟢', count: m.green_shells },
-          { emoji: '🔵', count: m.blue_shells },
-          { emoji: '⚡', count: m.lightnings },
-          { emoji: '☁️', count: m.clouds },
-        ];
-        const total = items.reduce((s, i) => s + (i.count || 0), 0);
-        return \`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-          <div style="flex:1;font-weight:600;font-size:14px">\${m.profiles?.username || 'Unknown'}\${isYou ? '<span class="you-badge" style="margin-left:6px">YOU</span>' : ''}</div>
-          <div style="display:flex;gap:10px;align-items:center">
-            \${items.map(i => i.count > 0 ? \`<span style="font-size:13px">\${i.emoji} <strong>\${i.count}</strong></span>\` : '').join('')}
-            \${total === 0 ? '<span class="text-muted text-sm">Empty</span>' : ''}
-          </div>
-        </div>\`;
-      }).join('')}
     </div>`;
 }
 

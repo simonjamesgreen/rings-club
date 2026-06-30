@@ -514,6 +514,152 @@ input, select { font-family: inherit; }
 .alert-error   { background: rgba(255,68,68,0.12); border: 1px solid var(--red);   color: #ff7777; }
 .alert-success { background: rgba(67,214,146,0.12); border: 1px solid var(--green); color: var(--green); }
 
+/* ─── SHELL FIRE UI ───────────────────────── */
+
+.shell-fire-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.shell-fire-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.shell-fire-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shell-fire-label {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.shell-fire-count {
+  background: var(--card-hover);
+  border-radius: 6px;
+  padding: 0.1rem 0.5rem;
+  font-weight: 900;
+  font-size: 0.85rem;
+}
+
+.shell-fire-sub {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.shell-target-select {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.shell-fire-btn {
+  margin-top: 0.2rem;
+  background: var(--gold);
+  color: #07071a;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-weight: 900;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+}
+
+.shell-fire-btn:hover:not(:disabled) { opacity: 0.88; }
+.shell-fire-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ─── EVERYONE'S INVENTORY ────────────────── */
+
+.inventory-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inventory-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.inventory-row:last-child { border-bottom: none; }
+
+.inventory-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.inventory-shells {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* ─── ACTIVITY FEED ───────────────────────── */
+
+.activity-feed {
+  margin-top: 2rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.activity-row {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+
+.activity-row:last-child { border-bottom: none; }
+
+.activity-label {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.activity-desc {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.activity-time {
+  color: var(--border-bright);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: right;
+}
+
+@media (max-width: 600px) {
+  .shell-fire-grid { grid-template-columns: 1fr; }
+  .activity-row { grid-template-columns: 1fr; gap: 0.2rem; }
+  .activity-time { text-align: left; }
+}
+
 /* ─── UTILS ───────────────────────────────── */
 
 .loading-state, .empty-state {

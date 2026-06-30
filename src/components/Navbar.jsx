@@ -18,11 +18,11 @@ export default function Navbar() {
       <div className="navbar-actions">
         {user ? (
           <>
-            <Link to="/admin" className="nav-link">Admin</Link>
+            <Link to="/admin" className="nav-link">My Day</Link>
             <button onClick={handleSignOut} className="nav-link">Sign out</button>
           </>
         ) : (
-          <Link to="/login" className="nav-btn">Admin</Link>
+          <Link to="/login" className="nav-btn">Sign in</Link>
         )}
       </div>
     </nav>

@@ -1,7 +1,6 @@
-import { getRankDisplay, hasImmunity } from '../lib/scoring'
+import { getRankDisplay } from '../lib/scoring'
 
-export default function PlayerCard({ rank, player, totalScore, todayScore, shells }) {
-  const isImmune    = todayScore !== null && todayScore !== undefined && hasImmunity(todayScore)
+export default function PlayerCard({ rank, player, totalScore, todayScore, isImmune, shells }) {
   const isQualified = todayScore !== null && todayScore !== undefined && todayScore >= 150
 
   const hasAnyShells = shells.red > 0 || shells.green > 0 || shells.blue > 0 || shells.mushrooms > 0

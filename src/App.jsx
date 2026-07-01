@@ -3,6 +3,7 @@ import { AuthProvider } from './lib/auth'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Rules from './pages/Rules'
 import SuperAdmin from './pages/SuperAdmin'
 
 export default function App() {
@@ -10,10 +11,11 @@ export default function App() {
     <AuthProvider>
       <Navbar />
       <Routes>
-        <Route path="/"            element={<Home />} />
-        <Route path="/login"       element={<Login />} />
-        <Route path="/superadmin"  element={<SuperAdmin />} />
-        <Route path="/admin"       element={<Navigate to="/" replace />} />
+        <Route path="/"           element={<Home />} />
+        <Route path="/login"      element={<Login />} />
+        <Route path="/rules"      element={<Rules />} />
+        <Route path="/superadmin" element={<SuperAdmin />} />
+        <Route path="/admin"      element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
   )

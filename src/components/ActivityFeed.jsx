@@ -10,6 +10,8 @@ const SHELL_ICON = {
   earn_green_shell: '🟢',
   earn_blue_shell:  '🔵',
   earn_mushroom:    '🍄',
+  earn_cloud:       '☁️',
+  use_cloud:        '☁️',
 }
 
 const SHELL_NAME = {
@@ -21,6 +23,8 @@ const SHELL_NAME = {
   earn_green_shell: 'Green Shell',
   earn_blue_shell:  'Blue Shell',
   earn_mushroom:    'Mushroom',
+  earn_cloud:       'Cloud',
+  use_cloud:        'Cloud',
 }
 
 function formatBST(isoString) {
@@ -60,7 +64,7 @@ export default function ActivityFeed({ leagueId, standings }) {
       .from('powerup_events')
       .select('*')
       .eq('league_id', leagueId)
-      .in('event_type', ['fire_red_shell', 'fire_green_shell', 'fire_blue_shell', 'use_mushroom'])
+      .in('event_type', ['fire_red_shell', 'fire_green_shell', 'fire_blue_shell', 'use_mushroom', 'use_cloud'])
       .order('created_at', { ascending: false })
       .limit(20)
     setEvents(data || [])

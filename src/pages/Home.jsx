@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { resolveAndGetStandings, fireShell } from '../lib/shellEngine'
-import { calculateScore, qualifiesForShell, qualifiesForMushroom, hasImmunity } from '../lib/scoring'
+import { calculateScore, qualifiesForShell, hasImmunity } from '../lib/scoring'
 import { useAuth } from '../lib/auth'
 import PlayerCard from '../components/PlayerCard'
 import TeamCard from '../components/TeamCard'
@@ -85,7 +85,11 @@ export default function Home() {
     }
   }
 
-  async function awardShellsIfEarned(score, exerciseMinutes) {
+  async function awardShellsIfEarned(score) {
+    // Threshold: 200%
+    if (!qualifiesForShell(score)) return []
+
+    // Only award once per day
     const { data: existingEarns } = await supabase
       .from('powerup_events').select('event_type')
       .eq('league_id', league.id)
@@ -93,39 +97,37 @@ export default function Home() {
       .eq('date', date)
       .in('event_type', ['earn_red_shell', 'earn_green_shell', 'earn_blue_shell', 'earn_mushroom'])
 
-    const alreadyShell = existingEarns?.some(e =>
-      ['earn_red_shell', 'earn_green_shell', 'earn_blue_shell'].includes(e.event_type))
-    const alreadyMushroom = existingEarns?.some(e => e.event_type === 'earn_mushroom')
+    const alreadyEarned = existingEarns?.some(e =>
+      ['earn_red_shell', 'earn_green_shell', 'earn_blue_shell', 'earn_mushroom'].includes(e.event_type))
+    if (alreadyEarned) return []
 
-    const earned = []
-    const patch = {}
+    // Cycle-based earning: track which of the 4 types earned this cycle
+    const ALL_TYPES = ['red', 'green', 'blue', 'mushroom']
+    const earnedThisCycle = me.shells_earned_this_cycle || []
+    const activeCycle = earnedThisCycle.length >= 4 ? [] : earnedThisCycle
 
-    if (qualifiesForShell(score) && !alreadyShell) {
-      const types = ['red', 'green', 'blue']
-      const type = types[Math.floor(Math.random() * 3)]
-      patch[`${type}_shells`] = (me[`${type}_shells`] || 0) + 1
-      await supabase.from('powerup_events').insert({
-        league_id: league.id, date, actor_player_id: me.player_id,
-        event_type: `earn_${type}_shell`, quantity: 1, status: 'applied',
-        notes: `Earned for ${score}% score`,
-      })
-      earned.push(type === 'red' ? '🔴 Red Shell' : type === 'green' ? '🟢 Green Shell' : '🔵 Blue Shell')
-    }
+    // Pick randomly from types not yet earned this cycle
+    const available = ALL_TYPES.filter(t => !activeCycle.includes(t))
+    const type = available[Math.floor(Math.random() * available.length)]
 
-    if (qualifiesForMushroom(exerciseMinutes) && !alreadyMushroom) {
-      patch.mushrooms = (me.mushrooms || 0) + 1
-      await supabase.from('powerup_events').insert({
-        league_id: league.id, date, actor_player_id: me.player_id,
-        event_type: 'earn_mushroom', quantity: 1, status: 'applied',
-        notes: `Earned for ${exerciseMinutes} min exercise`,
-      })
-      earned.push('🍄 Mushroom')
-    }
+    const col       = type === 'mushroom' ? 'mushrooms' : `${type}_shells`
+    const eventType = type === 'mushroom' ? 'earn_mushroom' : `earn_${type}_shell`
+    const newCycle  = [...activeCycle, type]
+    const cycleComplete = newCycle.length >= 4
 
-    if (Object.keys(patch).length > 0) {
-      await supabase.from('league_members').update(patch).eq('id', me.id)
-    }
-    return earned
+    await supabase.from('league_members').update({
+      [col]: (me[col] || 0) + 1,
+      shells_earned_this_cycle: cycleComplete ? [] : newCycle,
+    }).eq('id', me.id)
+
+    await supabase.from('powerup_events').insert({
+      league_id: league.id, date, actor_player_id: me.player_id,
+      event_type: eventType, quantity: 1, status: 'applied',
+      notes: `Cycle [${newCycle.join(',')}]${cycleComplete ? ' → reset' : ''}`,
+    })
+
+    const labels = { red: '🔴 Red Shell', green: '🟢 Green Shell', blue: '🔵 Blue Shell', mushroom: '🍄 Mushroom' }
+    return [labels[type]]
   }
 
   async function save() {
@@ -144,7 +146,7 @@ export default function Home() {
       if (ue) throw ue
 
       const score = calculateScore(mc, me.move_goal, em, sh)
-      const earned = await awardShellsIfEarned(score, em)
+      const earned = await awardShellsIfEarned(score)
       setSaveMsg('success')
       setEarnedShells(earned)
       await refreshAll()
@@ -211,9 +213,9 @@ export default function Home() {
   const score = me ? calculateScore(mc, me.move_goal, em, sh) : 0
   const isImmune    = hasImmunity(score)
   const isQualified = qualifiesForShell(score)
-  const earnsShroom = qualifiesForMushroom(em)
   const others      = me ? standings.filter(s => s.player_id !== me.player_id) : []
   const shellDefs   = me ? [
+    { key: 'cloud',    icon: '☁️', label: 'Cloud',       sub: 'Effect coming soon',           count: me.clouds       },
     { key: 'red',      icon: '🔴', label: 'Red Shell',   sub: 'Halves today\'s leader — lands tomorrow', count: me.red_shells   },
     { key: 'green',    icon: '🟢', label: 'Green Shell', sub: 'Pick a target — lands tomorrow',       count: me.green_shells },
     { key: 'blue',     icon: '🔵', label: 'Blue Shell',  sub: 'Hits the season leader — lands tomorrow', count: me.blue_shells  },
@@ -259,7 +261,7 @@ export default function Home() {
                 todayScore={row.todayScore}
                 isImmune={row.todayImmune}
                 isMe={!!user && row.player?.email === user.email}
-                shells={{ red: row.red_shells, green: row.green_shells, blue: row.blue_shells, mushrooms: row.mushrooms }}
+                shells={{ red: row.red_shells, green: row.green_shells, blue: row.blue_shells, mushrooms: row.mushrooms, clouds: row.clouds }}
               />
             ))}
             {!standings.some(s => s.totalScore > 0) && (
@@ -346,7 +348,7 @@ export default function Home() {
                   <span className="score-preview-num">{score}%</span>
                   <span className="score-preview-tags">
                     {isImmune    && <span className="tag tag-immune">⚡ Immune</span>}
-                    {isQualified && !isImmune && <span className="tag tag-shell">🐚 Shell earned</span>}
+                    {isQualified && !isImmune && <span className="tag tag-shell">🐚 Shell earned (200%+)</span>}
                     {earnsShroom && <span className="tag tag-shroom">🍄 Mushroom earned</span>}
                   </span>
                 </div>
@@ -421,6 +423,7 @@ export default function Home() {
                       <span className={s.green_shells > 0 ? 'inv-shell inv-green' : 'inv-shell inv-zero'}>🟢 {s.green_shells}</span>
                       <span className={s.blue_shells  > 0 ? 'inv-shell inv-blue'  : 'inv-shell inv-zero'}>🔵 {s.blue_shells}</span>
                       <span className={s.mushrooms    > 0 ? 'inv-shell inv-mush'  : 'inv-shell inv-zero'}>🍄 {s.mushrooms}</span>
+                      <span className={s.clouds       > 0 ? 'inv-shell inv-cloud' : 'inv-shell inv-zero'}>☁️ {s.clouds}</span>
                     </div>
                   </div>
                 ))}

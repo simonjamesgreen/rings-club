@@ -10,7 +10,7 @@ export function calculateScore(moveCalories, moveGoal, exerciseMinutes, standHou
 
 /** ≥150% move qualifies for a shell */
 export function qualifiesForShell(score) {
-  return score >= 150
+  return score >= 200
 }
 
 /** ≥90 exercise min qualifies for a mushroom */

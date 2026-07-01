@@ -765,3 +765,7 @@ body::before {
     gap: 0.4rem;
   }
 }
+
+/* ─── CLOUD SHELL ─────────────────────────── */
+.shell-count.cloud  { border-color: #c0c0c0; color: #d0d0d0; }
+.inv-cloud          { border-color: #c0c0c0 !important; color: #d0d0d0 !important; }

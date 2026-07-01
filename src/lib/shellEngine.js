@@ -2,34 +2,31 @@ import { supabase } from './supabase'
 import { calculateScore } from './scoring'
 
 /**
- * RINGS CLUB SHELL ENGINE v2
+ * RINGS CLUB SHELL ENGINE v3
  * ------------------------------------------------------------------
- * Resolution order per date (chronological, oldest first):
+ * ONE POWERUP INTERACTION PER PLAYER PER DAY.
  *
- *  1. Mushrooms      — raw * 1.5 (applied before cloud)
- *  2. Clouds         — MAX(100, movePct) * (1.5 if mushroom active)
- *                      + timestamp-based shell protection
- *  3. Immunity       — effectiveRaw >= 300 => immune to all shells
- *  4. Daily leader   — highest effectiveRaw = red shell auto-target
- *  5. Shells (timestamp order):
- *     RED   → daily leader. effectiveRaw * 0.5
- *     GREEN → manual target. effectiveRaw * 0.5
- *     BLUE  → season leader going into date D (earliest only).
- *             effect = day leader's effectiveRaw assigned to target
- *             self-fire = no score change, just protects via impacted
+ * All events (mushroom, cloud, red/green/blue shells) are processed
+ * in a single timestamp-ordered queue. Whichever powerup touches a
+ * player first (self-targeted or incoming) claims them for that day.
+ * Any subsequent powerup targeting the same player is returned.
  *
- *  A shell is RETURNED to its owner if:
- *    - target is immune (effectiveRaw >= 300), OR
- *    - target is already impacted that date, OR
- *    - target fired a cloud BEFORE this shell's timestamp, OR
- *    - (blue) another blue already succeeded today
+ * Pre-determined before the queue runs:
+ *   leaderPid       = player with highest RAW score today (red shell target)
+ *   leaderRawScore  = their raw score (blue shell effect value)
+ *   seasonLeaderPid = player with highest cumulative total so far (blue target)
+ *   immune          = players whose raw score >= 300% (immune to incoming shells)
+ *
+ * Queue rules (timestamp order):
+ *   use_mushroom   → self: if already impacted → return; else → raw * 1.5, impacted
+ *   use_cloud      → self: if already impacted → return; else → MAX(100, movePct), impacted
+ *   fire_red_shell → target = leaderPid: if immune/impacted/self → return; else → ×0.5, impacted
+ *   fire_green_shell → target = manual: if immune/impacted → return; else → ×0.5, impacted
+ *   fire_blue_shell → target = seasonLeader:
+ *       only one blue per day (first timestamp wins)
+ *       self-fire = self-protect (marks self impacted, no score change)
+ *       else: target gets leaderRawScore; if immune/impacted → return
  */
-
-const SHELL_COL = {
-  fire_red_shell:   'red_shells',
-  fire_green_shell: 'green_shells',
-  fire_blue_shell:  'blue_shells',
-}
 
 export async function resolveAndGetStandings(leagueId) {
   const [{ data: league }, { data: members }, { data: scores }, { data: events }] = await Promise.all([
@@ -43,17 +40,17 @@ export async function resolveAndGetStandings(leagueId) {
   members.forEach(m => { memberByPlayer[m.player_id] = m })
 
   // Filter to league date range
-  const inRange = (date) => {
-    if (league.start_date && date < league.start_date) return false
-    if (league.end_date   && date > league.end_date)   return false
+  const inRange = d => {
+    if (league.start_date && d < league.start_date) return false
+    if (league.end_date   && d > league.end_date)   return false
     return true
   }
-  const rangedScores = (scores  || []).filter(s => inRange(s.date))
-  const rangedEvents = (events  || []).filter(e => inRange(e.date))
+  const rangedScores = (scores || []).filter(s => inRange(s.date))
+  const rangedEvents = (events || []).filter(e => inRange(e.date))
 
-  // Raw scores (with zeroing) AND move-only % (for cloud calculation)
-  const rawScores  = {}  // [date][pid] = calculated score (0 if exercise/stand fail)
-  const rawMovePct = {}  // [date][pid] = (move_cal / move_goal) * 100 — no zeroing
+  // Build raw score lookups
+  const rawScores  = {}   // [date][pid] = score with zeroing (exercise/stand)
+  const rawMovePct = {}   // [date][pid] = (move_cal / move_goal) * 100, no zeroing
   rangedScores.forEach(s => {
     const moveGoal = memberByPlayer[s.player_id]?.move_goal || 500
     rawScores[s.date]  = rawScores[s.date]  || {}
@@ -64,6 +61,7 @@ export async function resolveAndGetStandings(leagueId) {
 
   const allDates = Object.keys(rawScores).sort()
 
+  // Cumulative totals (for blue shell season leader calculation)
   const cumulativeTotal = {}
   members.forEach(m => { cumulativeTotal[m.player_id] = 0 })
 
@@ -85,126 +83,144 @@ export async function resolveAndGetStandings(leagueId) {
   const today = new Date().toISOString().split('T')[0]
 
   for (const date of allDates) {
-    const dayRaw    = rawScores[date]
+    const dayRaw     = rawScores[date]
     const dayMovePct = rawMovePct[date] || {}
-    const dayEvents = (eventsByDate[date] || []).filter(e => e.status === 'pending')
     finalScores[date] = {}
 
     const playerIdsToday = Object.keys(dayRaw)
 
-    // ── Step 1: Mushrooms ─────────────────────────────────────────
-    const effectiveRaw = { ...dayRaw }
-    const mushroomEvents = dayEvents.filter(e => e.event_type === 'use_mushroom')
-    const mushroomPlayers = new Set()
-    for (const ev of mushroomEvents) {
-      if (!(ev.actor_player_id in dayRaw)) continue
-      effectiveRaw[ev.actor_player_id] = dayRaw[ev.actor_player_id] * 1.5
-      mushroomPlayers.add(ev.actor_player_id)
-      dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: ev.actor_player_id, final_score_applied: effectiveRaw[ev.actor_player_id] })
+    // ── Pre-determine leaders ───────────────────────────────────────
+    // Daily leader = highest RAW score (for red shell + blue shell effect)
+    let leaderPid = null, leaderRaw = -Infinity
+    for (const pid of playerIdsToday) {
+      if (dayRaw[pid] > leaderRaw) { leaderRaw = dayRaw[pid]; leaderPid = pid }
+    }
+    const leaderRawScore = leaderPid ? dayRaw[leaderPid] : 0
+
+    // Season leader = highest cumulative total BEFORE this date
+    let seasonLeaderPid = null, seasonLeaderTotal = -Infinity
+    for (const pid of Object.keys(cumulativeTotal)) {
+      if (cumulativeTotal[pid] > seasonLeaderTotal) {
+        seasonLeaderTotal = cumulativeTotal[pid]
+        seasonLeaderPid = pid
+      }
     }
 
-    // ── Step 2: Clouds ────────────────────────────────────────────
-    // Score effect: MAX(100, movePct) — bypasses exercise/stand zeroing
-    // Protection: timestamp-based shield against later shells
-    const cloudTimestamps = {} // pid -> Date object
-    const cloudEvents = dayEvents
-      .filter(e => e.event_type === 'use_cloud')
+    // Immunity: raw score >= 300% (incoming shells bounce, self-powerups still usable)
+    const immune = new Set(playerIdsToday.filter(pid => dayRaw[pid] >= 300))
+
+    // ── Effective raw starts equal to raw ──────────────────────────
+    const effectiveRaw = { ...dayRaw }
+
+    // ── Single timestamp-ordered queue ─────────────────────────────
+    const dayEvents = (eventsByDate[date] || [])
+      .filter(e => e.status === 'pending')
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
 
-    for (const ev of cloudEvents) {
-      const pid = ev.actor_player_id
-      if (!(pid in dayRaw)) continue
-      cloudTimestamps[pid] = new Date(ev.created_at)
-
-      // Cloud overrides zeroing: MAX(100, movePct)
-      // If mushroom also active, cloud bypasses zero then mushroom applies
-      const movePct = dayMovePct[pid] || 0
-      const base = Math.max(100, movePct)
-      effectiveRaw[pid] = mushroomPlayers.has(pid) ? base * 1.5 : base
-
-      dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: pid, final_score_applied: effectiveRaw[pid] })
-    }
-
-    // ── Step 3: Immunity ──────────────────────────────────────────
-    const immune = new Set(playerIdsToday.filter(pid => effectiveRaw[pid] >= 300))
-
-    // ── Step 4: Daily leader ──────────────────────────────────────
-    let leaderPid = null, leaderScore = -Infinity
-    for (const pid of playerIdsToday) {
-      if (effectiveRaw[pid] > leaderScore) { leaderScore = effectiveRaw[pid]; leaderPid = pid }
-    }
-
-    // ── Step 5: Shells (timestamp order) ─────────────────────────
-    const impacted = new Set()
+    const impacted = new Set()   // one interaction per player per day
     let blueSucceededToday = false
 
-    const shellEvents = dayEvents
-      .filter(e => ['fire_red_shell', 'fire_green_shell', 'fire_blue_shell'].includes(e.event_type))
-      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    for (const ev of dayEvents) {
+      const actor = ev.actor_player_id
 
-    for (const ev of shellEvents) {
-      const shellTime = new Date(ev.created_at)
-      const shellCol  = SHELL_COL[ev.event_type]
+      // ── Mushroom (self-targeted) ──────────────────────────────────
+      if (ev.event_type === 'use_mushroom') {
+        if (!(actor in dayRaw)) continue    // score not entered yet
+        if (impacted.has(actor)) {
+          queueRefund(actor, 'mushrooms')
+          dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: actor, final_score_applied: null })
+        } else {
+          effectiveRaw[actor] = dayRaw[actor] * 1.5
+          impacted.add(actor)
+          dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: actor, final_score_applied: effectiveRaw[actor] })
+        }
+      }
 
-      // ── Resolve target ──
-      let targetPid = null
+      // ── Cloud (self-targeted) ─────────────────────────────────────
+      else if (ev.event_type === 'use_cloud') {
+        if (!(actor in dayRaw)) continue
+        if (impacted.has(actor)) {
+          queueRefund(actor, 'clouds')
+          dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: actor, final_score_applied: null })
+        } else {
+          effectiveRaw[actor] = Math.max(100, dayMovePct[actor] || 0)
+          impacted.add(actor)
+          dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: actor, final_score_applied: effectiveRaw[actor] })
+        }
+      }
 
-      if (ev.event_type === 'fire_red_shell') {
-        if (!leaderPid || !(leaderPid in dayRaw)) continue
-        targetPid = leaderPid
+      // ── Red Shell (auto-target: daily leader) ─────────────────────
+      else if (ev.event_type === 'fire_red_shell') {
+        if (!leaderPid || !(leaderPid in dayRaw)) continue  // can't resolve yet
+        const shouldReturn = leaderPid === actor            // can't hit yourself
+          || immune.has(leaderPid)
+          || impacted.has(leaderPid)
+        if (shouldReturn) {
+          queueRefund(actor, 'red_shells')
+          dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: leaderPid, final_score_applied: null })
+        } else {
+          effectiveRaw[leaderPid] = effectiveRaw[leaderPid] * 0.5
+          finalScores[date][leaderPid] = effectiveRaw[leaderPid]
+          impacted.add(leaderPid)
+          dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: leaderPid, final_score_applied: effectiveRaw[leaderPid] })
+        }
+      }
 
-      } else if (ev.event_type === 'fire_green_shell') {
-        if (!ev.target_player_id || !(ev.target_player_id in dayRaw)) continue
-        targetPid = ev.target_player_id
+      // ── Green Shell (manual target) ───────────────────────────────
+      else if (ev.event_type === 'fire_green_shell') {
+        const target = ev.target_player_id
+        if (!target || !(target in dayRaw)) continue
+        const shouldReturn = immune.has(target) || impacted.has(target)
+        if (shouldReturn) {
+          queueRefund(actor, 'green_shells')
+          dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: target, final_score_applied: null })
+        } else {
+          effectiveRaw[target] = effectiveRaw[target] * 0.5
+          finalScores[date][target] = effectiveRaw[target]
+          impacted.add(target)
+          dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: target, final_score_applied: effectiveRaw[target] })
+        }
+      }
 
-      } else if (ev.event_type === 'fire_blue_shell') {
+      // ── Blue Shell (auto-target: season leader) ───────────────────
+      else if (ev.event_type === 'fire_blue_shell') {
+        // Only one blue per day — first timestamp wins
         if (blueSucceededToday) {
-          queueRefund(ev.actor_player_id, 'blue_shells')
+          queueRefund(actor, 'blue_shells')
           dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: null, final_score_applied: null })
           continue
         }
-        if (!leaderPid || !(leaderPid in dayRaw)) continue
-        let slPid = null, slTotal = -Infinity
-        for (const pid of Object.keys(cumulativeTotal)) {
-          if (cumulativeTotal[pid] > slTotal) { slTotal = cumulativeTotal[pid]; slPid = pid }
-        }
-        targetPid = slPid
-      }
+        if (!seasonLeaderPid || !(seasonLeaderPid in dayRaw)) continue
 
-      if (!targetPid) continue
-
-      // ── Cloud protection check ──
-      const cloudTime     = cloudTimestamps[targetPid]
-      const cloudProtects = cloudTime && cloudTime < shellTime
-
-      // ── Return conditions ──
-      if (immune.has(targetPid) || impacted.has(targetPid) || cloudProtects) {
-        queueRefund(ev.actor_player_id, shellCol)
-        dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: targetPid, final_score_applied: null })
-        continue
-      }
-
-      // ── Apply shell ──
-      impacted.add(targetPid)
-
-      if (ev.event_type === 'fire_blue_shell') {
-        blueSucceededToday = true
-        if (targetPid === ev.actor_player_id) {
-          // Self-protect: marks impacted, no score change
-          dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: targetPid, final_score_applied: null })
+        if (seasonLeaderPid === actor) {
+          // Self-protect: season leader uses blue on themselves
+          if (impacted.has(actor)) {
+            queueRefund(actor, 'blue_shells')
+            dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: actor, final_score_applied: null })
+          } else {
+            impacted.add(actor)
+            blueSucceededToday = true
+            dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: actor, final_score_applied: null })
+          }
         } else {
-          const final = effectiveRaw[leaderPid]
-          finalScores[date][targetPid] = final
-          dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: targetPid, final_score_applied: final })
+          // Target the season leader
+          const shouldReturn = immune.has(seasonLeaderPid) || impacted.has(seasonLeaderPid)
+          if (shouldReturn) {
+            queueRefund(actor, 'blue_shells')
+            dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: seasonLeaderPid, final_score_applied: null })
+          } else {
+            // Effect: season leader's score becomes today's leader's RAW score
+            effectiveRaw[seasonLeaderPid] = leaderRawScore
+            finalScores[date][seasonLeaderPid] = leaderRawScore
+            impacted.add(seasonLeaderPid)
+            blueSucceededToday = true
+            dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: seasonLeaderPid, final_score_applied: leaderRawScore })
+          }
         }
-      } else {
-        const final = effectiveRaw[targetPid] * 0.5
-        finalScores[date][targetPid] = final
-        dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: targetPid, final_score_applied: final })
       }
     }
 
-    // ── Fill final scores ─────────────────────────────────────────
+    // ── Fill final scores for all players ──────────────────────────
     for (const pid of playerIdsToday) {
       if (!(pid in finalScores[date])) finalScores[date][pid] = effectiveRaw[pid]
       cumulativeTotal[pid] = (cumulativeTotal[pid] || 0) + finalScores[date][pid]
@@ -240,8 +256,9 @@ export async function resolveAndGetStandings(leagueId) {
     return {
       ...m,
       totalScore:  Math.round(total),
-      todayScore:  finalScores[today]?.[m.player_id] != null ? Math.round(finalScores[today][m.player_id]) : null,
-      todayImmune: rawScores[today]?.[m.player_id] != null && effectiveRawForToday(m.player_id, today, rawScores, rawMovePct, memberByPlayer) >= 300,
+      todayScore:  finalScores[today]?.[m.player_id] != null
+        ? Math.round(finalScores[today][m.player_id]) : null,
+      todayImmune: (rawScores[today]?.[m.player_id] || 0) >= 300,
     }
   })
   standings.sort((a, b) => b.totalScore - a.totalScore)
@@ -253,26 +270,21 @@ export async function resolveAndGetStandings(leagueId) {
     .eq('league_id', leagueId)
 
   const teamStandings = (teamsData || []).map(team => {
-    const memberIds    = (team.team_members || []).map(m => m.player_id)
+    const memberIds     = (team.team_members || []).map(m => m.player_id)
     const memberPlayers = (team.team_members || []).map(m => m.players)
-
     let teamTotal = 0
     for (const date of allDates) {
       const dayScores = memberIds
         .filter(pid => finalScores[date]?.[pid] !== undefined)
         .map(pid => finalScores[date][pid])
-      if (dayScores.length > 0) {
-        teamTotal += dayScores.reduce((a, b) => a + b, 0) / dayScores.length
-      }
+      if (dayScores.length) teamTotal += dayScores.reduce((a, b) => a + b, 0) / dayScores.length
     }
-
     const todayMemberScores = memberIds
       .filter(pid => finalScores[today]?.[pid] !== undefined)
       .map(pid => finalScores[today][pid])
-    const todayScore = todayMemberScores.length > 0
+    const todayScore = todayMemberScores.length
       ? Math.round(todayMemberScores.reduce((a, b) => a + b, 0) / todayMemberScores.length)
       : null
-
     return { id: team.id, name: team.name, avatar_color: team.avatar_color, memberPlayers, totalScore: Math.round(teamTotal), todayScore }
   })
   teamStandings.sort((a, b) => b.totalScore - a.totalScore)
@@ -280,24 +292,15 @@ export async function resolveAndGetStandings(leagueId) {
   return { league, standings, teamStandings, refunded: Object.keys(refunds).length > 0 }
 }
 
-// Helper: approximate effective raw for a player on a given date (for todayImmune display)
-function effectiveRawForToday(pid, today, rawScores, rawMovePct, memberByPlayer) {
-  const raw = rawScores[today]?.[pid]
-  if (raw == null) return 0
-  return raw // simplified — mushroom/cloud effects are computed in full resolution only
-}
-
-/** Fire a shell. Decrements inventory immediately, logs event with timestamp. */
+/** Fire a shell — decrements inventory immediately, logs with timestamp. */
 export async function fireShell(leagueId, memberId, actorPlayerId, shellType, targetPlayerId = null) {
   const eventTypeMap = {
-    red:      'fire_red_shell',
-    green:    'fire_green_shell',
-    blue:     'fire_blue_shell',
-    mushroom: 'use_mushroom',
-    cloud:    'use_cloud',
+    red: 'fire_red_shell', green: 'fire_green_shell', blue: 'fire_blue_shell',
+    mushroom: 'use_mushroom', cloud: 'use_cloud',
   }
   const colMap = {
-    red: 'red_shells', green: 'green_shells', blue: 'blue_shells', mushroom: 'mushrooms', cloud: 'clouds',
+    red: 'red_shells', green: 'green_shells', blue: 'blue_shells',
+    mushroom: 'mushrooms', cloud: 'clouds',
   }
 
   const { data: member, error: me } = await supabase
@@ -310,19 +313,17 @@ export async function fireShell(leagueId, memberId, actorPlayerId, shellType, ta
   const today = new Date().toISOString().split('T')[0]
 
   const { error: ue } = await supabase
-    .from('league_members')
-    .update({ [col]: member[col] - 1 })
-    .eq('id', memberId)
+    .from('league_members').update({ [col]: member[col] - 1 }).eq('id', memberId)
   if (ue) throw ue
 
   const { error: ie } = await supabase.from('powerup_events').insert({
-    league_id:       leagueId,
-    date:            today,
-    actor_player_id: actorPlayerId,
-    event_type:      eventTypeMap[shellType],
+    league_id:        leagueId,
+    date:             today,
+    actor_player_id:  actorPlayerId,
+    event_type:       eventTypeMap[shellType],
     target_player_id: shellType === 'green' ? targetPlayerId : null,
-    quantity:        1,
-    status:          'pending',
+    quantity:         1,
+    status:           'pending',
   })
   if (ie) throw ie
 }

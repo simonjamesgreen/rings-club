@@ -509,3 +509,22 @@ body::before {
   .leaderboard-page { padding-top: 1.25rem; }
   .admin-page { padding-top: 1.25rem; }
 }
+
+/* ─── MOVE GOALS ──────────────────────────── */
+.goals-grid { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
+
+.goal-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.5rem 0; border-bottom: 1px solid var(--border);
+}
+.goal-row:last-child { border-bottom: none; }
+
+.goal-input-wrap { display: flex; align-items: center; gap: 0.5rem; }
+
+.goal-input {
+  width: 90px !important;
+  min-height: 44px !important;
+  font-size: 1rem !important;
+}
+
+.goal-unit { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }

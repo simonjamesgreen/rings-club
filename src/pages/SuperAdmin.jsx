@@ -13,9 +13,11 @@ export default function SuperAdmin() {
   const [league,    setLeague]    = useState(null)
   const [standings, setStandings] = useState([])
   const [date,      setDate]      = useState(new Date().toISOString().split('T')[0])
-  const [inputs,    setInputs]    = useState({})    // player_id -> { move_calories, exercise_minutes, stand_hours }
+  const [inputs,    setInputs]    = useState({})
+  const [goals,     setGoals]     = useState({})   // player_id -> move_goal string
   const [saving,    setSaving]    = useState(false)
   const [saveMsg,   setSaveMsg]   = useState(null)
+  const [goalMsg,   setGoalMsg]   = useState(null)
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
 
@@ -31,6 +33,11 @@ export default function SuperAdmin() {
 
       const { standings } = await resolveAndGetStandings(l.id)
       setStandings(standings)
+
+      // Pre-fill goals from current DB values
+      const g = {}
+      standings.forEach(m => { g[m.player_id] = String(m.move_goal) })
+      setGoals(g)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -87,11 +94,29 @@ export default function SuperAdmin() {
     }
   }
 
+  async function saveGoals() {
+    setGoalMsg(null)
+    try {
+      for (const m of standings) {
+        const val = parseInt(goals[m.player_id])
+        if (!val || val < 1) continue
+        const { error } = await supabase
+          .from('league_members')
+          .update({ move_goal: val })
+          .eq('id', m.id)
+        if (error) throw error
+      }
+      setGoalMsg('success')
+      await refreshStandings()
+    } catch (err) {
+      setGoalMsg('error:' + err.message)
+    }
+  }
+
   async function adjustShell(memberId, col, delta) {
     const member = standings.find(s => s.id === memberId)
     if (!member) return
-    const current = member[col] || 0
-    const next = Math.max(0, current + delta)
+    const next = Math.max(0, (member[col] || 0) + delta)
     await supabase.from('league_members').update({ [col]: next }).eq('id', memberId)
     await refreshStandings()
   }
@@ -112,7 +137,43 @@ export default function SuperAdmin() {
         <p>{league?.name} · Simon only</p>
       </div>
 
-      {/* ALL PLAYER SCORES */}
+      {/* ── MOVE GOALS ── */}
+      <div className="admin-card">
+        <p className="admin-card-title">Move Goals (Cal target per day)</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 700, marginBottom: '1rem' }}>
+          Set once, used in every score calculation forever. Each person's goal from their Apple Watch activity settings.
+        </p>
+
+        <div className="goals-grid">
+          {standings.map(m => (
+            <div key={m.player_id} className="goal-row">
+              <span className="inventory-name" style={{ color: m.player.avatar_color }}>
+                {m.player.display_name}
+              </span>
+              <div className="goal-input-wrap">
+                <input
+                  type="number"
+                  min="1"
+                  max="9999"
+                  className="score-entry-input goal-input"
+                  value={goals[m.player_id] || ''}
+                  onChange={e => setGoals(prev => ({ ...prev, [m.player_id]: e.target.value }))}
+                  placeholder="500"
+                  inputMode="numeric"
+                />
+                <span className="goal-unit">cal</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {goalMsg === 'success' && <div className="alert alert-success" style={{ marginTop: '1rem' }}>Move goals saved ✓</div>}
+        {goalMsg?.startsWith('error:') && <div className="alert alert-error" style={{ marginTop: '1rem' }}>{goalMsg.slice(6)}</div>}
+
+        <button className="save-btn" onClick={saveGoals}>Save Move Goals</button>
+      </div>
+
+      {/* ── ALL PLAYER SCORES ── */}
       <div className="admin-card">
         <p className="admin-card-title">Score Entry — All Players</p>
 
@@ -135,6 +196,9 @@ export default function SuperAdmin() {
               <div className="superadmin-player-header">
                 <span className="score-player" style={{ color: m.player.avatar_color }}>
                   {m.player.display_name}
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.75rem', marginLeft: '0.5rem' }}>
+                    goal: {m.move_goal} cal
+                  </span>
                 </span>
                 <span className={`score-preview ${score >= 300 ? 'immune' : score >= 150 ? 'qualifying' : ''}`}>
                   {score > 0 ? `${score}%` : '—'}
@@ -175,7 +239,7 @@ export default function SuperAdmin() {
         </button>
       </div>
 
-      {/* SHELL INVENTORY MANAGEMENT */}
+      {/* ── SHELL INVENTORY MANAGEMENT ── */}
       <div className="admin-card">
         <p className="admin-card-title">Shell Inventory — Manual Adjust</p>
         <div className="inventory-adjust-grid">

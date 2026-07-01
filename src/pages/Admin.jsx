@@ -198,7 +198,7 @@ export default function Admin() {
 
       {/* SCORE ENTRY */}
       <div className="admin-card">
-        <p className="admin-card-title">Enter Your Score</p>
+        <p className="admin-card-title">Enter Your Score · <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>Goal: {me.move_goal} cal</span></p>
 
         <div className="date-row">
           <label htmlFor="score-date">Date</label>

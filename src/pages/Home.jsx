@@ -5,6 +5,7 @@ import { resolveAndGetStandings, fireShell } from '../lib/shellEngine'
 import { calculateScore, qualifiesForShell, qualifiesForMushroom, hasImmunity } from '../lib/scoring'
 import { useAuth } from '../lib/auth'
 import PlayerCard from '../components/PlayerCard'
+import TeamCard from '../components/TeamCard'
 import ActivityFeed from '../components/ActivityFeed'
 
 export default function Home() {
@@ -15,6 +16,9 @@ export default function Home() {
   const [standings, setStandings] = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
+
+  const [teamStandings, setTeamStandings] = useState([])
+  const [activeTab,     setActiveTab]     = useState('individual') // 'individual' | 'teams'
 
   // My Day
   const [me,           setMe]           = useState(null)
@@ -37,9 +41,10 @@ export default function Home() {
         .from('leagues').select('*').eq('status', 'active').single()
       if (le) throw le
 
-      const { league: lg, standings: st } = await resolveAndGetStandings(l.id)
+      const { league: lg, standings: st, teamStandings: ts } = await resolveAndGetStandings(l.id)
       setLeague(lg)
       setStandings(st)
+      setTeamStandings(ts || [])
 
       if (user) {
         const myRow = st.find(s => s.player?.email === user.email)
@@ -71,8 +76,9 @@ export default function Home() {
   }
 
   async function refreshAll() {
-    const { standings: st } = await resolveAndGetStandings(league.id)
+    const { standings: st, teamStandings: ts } = await resolveAndGetStandings(league.id)
     setStandings(st)
+    setTeamStandings(ts || [])
     if (user) {
       const myRow = st.find(s => s.player?.email === user.email)
       setMe(myRow || null)
@@ -209,26 +215,56 @@ export default function Home() {
           <p className="leaderboard-meta">Started {startDate}</p>
         </header>
 
-        <div className="standings-list">
-          {standings.map((row, i) => (
-            <PlayerCard
-              key={row.player_id}
-              rank={i + 1}
-              player={row.player}
-              totalScore={row.totalScore}
-              todayScore={row.todayScore}
-              isImmune={row.todayImmune}
-              isMe={!!user && row.player?.email === user.email}
-              shells={{ red: row.red_shells, green: row.green_shells, blue: row.blue_shells, mushrooms: row.mushrooms }}
-            />
-          ))}
+        {/* Tab switcher */}
+        <div className="tab-bar">
+          <button
+            className={`tab-btn ${activeTab === 'individual' ? 'active' : ''}`}
+            onClick={() => setActiveTab('individual')}
+          >
+            Individual
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'teams' ? 'active' : ''}`}
+            onClick={() => setActiveTab('teams')}
+          >
+            Teams
+          </button>
         </div>
 
-        {!standings.some(s => s.totalScore > 0) && (
-          <div className="empty-state" style={{ marginTop: '1.5rem' }}>
-            <div className="empty-state-icon">🎮</div>
-            <h2>Race not started</h2>
-            <p>{user ? 'Enter your first score on the right.' : 'Sign in to enter scores.'}</p>
+        {activeTab === 'individual' ? (
+          <div className="standings-list">
+            {standings.map((row, i) => (
+              <PlayerCard
+                key={row.player_id}
+                rank={i + 1}
+                player={row.player}
+                totalScore={row.totalScore}
+                todayScore={row.todayScore}
+                isImmune={row.todayImmune}
+                isMe={!!user && row.player?.email === user.email}
+                shells={{ red: row.red_shells, green: row.green_shells, blue: row.blue_shells, mushrooms: row.mushrooms }}
+              />
+            ))}
+            {!standings.some(s => s.totalScore > 0) && (
+              <div className="empty-state" style={{ marginTop: '1.5rem' }}>
+                <div className="empty-state-icon">🎮</div>
+                <h2>Race not started</h2>
+                <p>{user ? 'Enter your first score on the right.' : 'Sign in to enter scores.'}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="standings-list">
+            {teamStandings.map((team, i) => (
+              <TeamCard key={team.id} rank={i + 1} team={team} />
+            ))}
+            {!teamStandings.some(t => t.totalScore > 0) && (
+              <div className="empty-state" style={{ marginTop: '1.5rem' }}>
+                <div className="empty-state-icon">🏆</div>
+                <h2>No team scores yet</h2>
+                <p>Enter individual scores to see the team standings.</p>
+              </div>
+            )}
           </div>
         )}
       </section>

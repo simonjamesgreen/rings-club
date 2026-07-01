@@ -223,7 +223,48 @@ export async function resolveAndGetStandings(leagueId) {
 
   standings.sort((a, b) => b.totalScore - a.totalScore)
 
-  return { league, standings, refunded: Object.keys(refunds).length > 0 }
+  // ── Team standings ──────────────────────────────────
+  const { data: teamsData } = await supabase
+    .from('teams')
+    .select('*, team_members(player_id, players(id, display_name, avatar_color))')
+    .eq('league_id', leagueId)
+
+  const teamStandings = (teamsData || []).map(team => {
+    const memberIds = (team.team_members || []).map(m => m.player_id)
+    const memberPlayers = (team.team_members || []).map(m => m.players)
+
+    // Sum of daily team averages
+    let teamTotal = 0
+    for (const date of allDates) {
+      const dayScores = memberIds
+        .filter(pid => finalScores[date]?.[pid] !== undefined)
+        .map(pid => finalScores[date][pid])
+      if (dayScores.length > 0) {
+        teamTotal += dayScores.reduce((a, b) => a + b, 0) / dayScores.length
+      }
+    }
+
+    // Today's team average
+    const todayMemberScores = memberIds
+      .filter(pid => finalScores[today]?.[pid] !== undefined)
+      .map(pid => finalScores[today][pid])
+    const todayScore = todayMemberScores.length > 0
+      ? Math.round(todayMemberScores.reduce((a, b) => a + b, 0) / todayMemberScores.length)
+      : null
+
+    return {
+      id: team.id,
+      name: team.name,
+      avatar_color: team.avatar_color,
+      memberPlayers,
+      totalScore: Math.round(teamTotal),
+      todayScore,
+    }
+  })
+
+  teamStandings.sort((a, b) => b.totalScore - a.totalScore)
+
+  return { league, standings, teamStandings, refunded: Object.keys(refunds).length > 0 }
 }
 
 /** Fire a shell. Decrements inventory immediately, logs event with timestamp. */

@@ -18,9 +18,8 @@ export default function Navbar() {
       <div className="navbar-actions">
         {user ? (
           <>
-            <Link to="/admin" className="nav-link">My Day</Link>
             {user.email === SIMON && (
-              <Link to="/superadmin" className="nav-link nav-link-admin">⚙️</Link>
+              <Link to="/superadmin" className="nav-link nav-link-admin" title="Admin">⚙️</Link>
             )}
             <button onClick={handleSignOut} className="nav-link">Sign out</button>
           </>

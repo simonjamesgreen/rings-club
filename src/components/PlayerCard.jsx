@@ -1,16 +1,20 @@
 import { getRankDisplay } from '../lib/scoring'
 
-export default function PlayerCard({ rank, player, totalScore, todayScore, isImmune, shells }) {
+export default function PlayerCard({ rank, player, totalScore, todayScore, isImmune, isMe, shells }) {
   const isQualified = todayScore !== null && todayScore !== undefined && todayScore >= 150
   const hasAnyShells = shells.red > 0 || shells.green > 0 || shells.blue > 0 || shells.mushrooms > 0
 
   return (
-    <div className={`player-card rank-${rank}`} style={{ '--player-color': player.avatar_color }}>
+    <div
+      className={`player-card rank-${rank} ${isMe ? 'is-me' : ''}`}
+      style={{ '--player-color': player.avatar_color }}
+    >
       <div className="player-rank">{getRankDisplay(rank)}</div>
 
       <div className="player-identity">
         <span className="player-name" style={{ color: player.avatar_color }}>
           {player.display_name}
+          {isMe && <span className="you-tag">you</span>}
         </span>
         <div className="player-badges">
           {isImmune && <span className="badge badge-immune">⚡ Immune</span>}

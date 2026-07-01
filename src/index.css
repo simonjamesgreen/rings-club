@@ -528,3 +528,68 @@ body::before {
 }
 
 .goal-unit { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
+
+/* ─── HOME PAGE (two-column) ──────────────── */
+.home-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 5rem;
+  align-items: start;
+}
+
+.home-left { min-width: 0; }
+.home-right { min-width: 0; }
+
+.myday-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.myday-title { font-size: 1.5rem; font-weight: 900; }
+.myday-goal  { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); }
+
+.signin-prompt {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* "you" badge next to player name */
+.you-tag {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  background: rgba(255,215,0,0.15);
+  color: var(--gold);
+  border: 1px solid rgba(255,215,0,0.4);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
+/* Subtle glow on the logged-in player's row */
+.player-card.is-me {
+  border-right: 2px solid rgba(255,215,0,0.3);
+}
+
+/* single column on mobile */
+@media (max-width: 768px) {
+  .home-page {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 1rem 0.75rem 5rem;
+  }
+}

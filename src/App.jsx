@@ -1,9 +1,8 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './lib/auth'
 import Navbar from './components/Navbar'
-import Leaderboard from './pages/Leaderboard'
+import Home from './pages/Home'
 import Login from './pages/Login'
-import Admin from './pages/Admin'
 import SuperAdmin from './pages/SuperAdmin'
 
 export default function App() {
@@ -11,10 +10,10 @@ export default function App() {
     <AuthProvider>
       <Navbar />
       <Routes>
-        <Route path="/"          element={<Leaderboard />} />
-        <Route path="/login"     element={<Login />} />
-        <Route path="/admin"     element={<Admin />} />
-        <Route path="/superadmin" element={<SuperAdmin />} />
+        <Route path="/"            element={<Home />} />
+        <Route path="/login"       element={<Login />} />
+        <Route path="/superadmin"  element={<SuperAdmin />} />
+        <Route path="/admin"       element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
   )

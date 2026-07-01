@@ -214,10 +214,10 @@ export default function Home() {
   const earnsShroom = qualifiesForMushroom(em)
   const others      = me ? standings.filter(s => s.player_id !== me.player_id) : []
   const shellDefs   = me ? [
-    { key: 'red',      icon: '🔴', label: 'Red Shell',   sub: 'Halves today\'s leader',   count: me.red_shells   },
-    { key: 'green',    icon: '🟢', label: 'Green Shell', sub: 'Pick your target',          count: me.green_shells },
-    { key: 'blue',     icon: '🔵', label: 'Blue Shell',  sub: 'Hits the season leader',    count: me.blue_shells  },
-    { key: 'mushroom', icon: '🍄', label: 'Mushroom',    sub: '+50% to your score today',  count: me.mushrooms    },
+    { key: 'red',      icon: '🔴', label: 'Red Shell',   sub: 'Halves today\'s leader — lands tomorrow', count: me.red_shells   },
+    { key: 'green',    icon: '🟢', label: 'Green Shell', sub: 'Pick a target — lands tomorrow',       count: me.green_shells },
+    { key: 'blue',     icon: '🔵', label: 'Blue Shell',  sub: 'Hits the season leader — lands tomorrow', count: me.blue_shells  },
+    { key: 'mushroom', icon: '🍄', label: 'Mushroom',    sub: '+50% to your score — lands tomorrow', count: me.mushrooms    },
   ] : []
 
   return (
@@ -373,7 +373,7 @@ export default function Home() {
 
               {fireMsg === 'success' && (
                 <div className="alert alert-success" style={{ marginBottom: '0.75rem' }}>
-                  Fired! Resolves when today's scores are in.
+                  Fired! It lands tomorrow when scores for today are entered.
                 </div>
               )}
               {fireMsg?.startsWith('error:') && (

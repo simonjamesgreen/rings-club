@@ -87,7 +87,7 @@ export default function ActivityFeed({ leagueId, standings }) {
         const isFire = ev.event_type.startsWith('fire_')
 
         let statusBadge
-        if (ev.status === 'pending')  statusBadge = <span className="status-badge pending">⏳ Pending</span>
+        if (ev.status === 'pending')  statusBadge = <span className="status-badge pending">⏳ Lands tomorrow</span>
         if (ev.status === 'applied')  statusBadge = <span className="status-badge applied">✓ Hit</span>
         if (ev.status === 'returned') statusBadge = <span className="status-badge returned">↩ Returned</span>
 

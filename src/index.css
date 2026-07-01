@@ -672,3 +672,96 @@ body::before {
   font-size: 0.75rem;
   font-weight: 700;
 }
+
+/* ─── ACTIVITY FEED V2 ────────────────────── */
+.activity-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.activity-row-v2 {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-row-v2:last-child { border-bottom: none; }
+
+.activity-shell {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.activity-icon { font-size: 1rem; line-height: 1; }
+
+.activity-shell-name {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.activity-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+}
+
+.activity-desc { color: var(--text-muted); font-weight: 600; }
+
+.status-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.status-badge.pending  { background: rgba(255,173,71,0.15); color: #ffad47; border: 1px solid #ffad47; }
+.status-badge.applied  { background: rgba(67,214,146,0.15); color: var(--green); border: 1px solid var(--green); }
+.status-badge.returned { background: rgba(136,136,187,0.15); color: var(--text-muted); border: 1px solid var(--border-bright); }
+
+.activity-timestamp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+}
+
+.activity-time-ms {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.activity-date-small {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--border-bright);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .activity-row-v2 {
+    grid-template-columns: 90px 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.2rem 0.4rem;
+  }
+  .activity-timestamp {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+  }
+}

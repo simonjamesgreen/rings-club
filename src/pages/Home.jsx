@@ -155,7 +155,20 @@ export default function Home() {
     }
   }
 
+  function getBSTHour() {
+    return parseInt(new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/London',
+      hour: 'numeric',
+      hour12: false,
+    }).format(new Date()))
+  }
+
   async function handleFire(shellType) {
+    const bstHour = getBSTHour()
+    if (bstHour < 7 || bstHour >= 23) {
+      setFireMsg('error:Shells can only be fired between 7:00am and 11:00pm BST')
+      return
+    }
     if (shellType === 'green' && !greenTarget) {
       setFireMsg('error:Pick a target first')
       return
@@ -271,6 +284,7 @@ export default function Home() {
             )}
           </div>
         )}
+        <ActivityFeed leagueId={league.id} standings={standings} />
       </section>
 
       {/* ── RIGHT: MY DAY ── */}
@@ -413,7 +427,6 @@ export default function Home() {
               </div>
             </div>
 
-            <ActivityFeed leagueId={league.id} standings={standings} />
           </>
         )}
       </section>

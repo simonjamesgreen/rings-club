@@ -33,11 +33,19 @@ export default function Leaderboard() {
 
   if (loading) return <div className="loading-state">Loading…</div>
   if (error)   return <div className="loading-state">Error: {error}</div>
-  if (!league) return <div className="empty-state">No active league found.</div>
+  if (!league) return (
+    <div className="empty-state">
+      <div className="empty-state-icon">🏁</div>
+      <h2>No active league</h2>
+      <p>Ask Simon to set one up.</p>
+    </div>
+  )
 
   const startDate = new Date(league.start_date).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'long', year: 'numeric'
   })
+
+  const hasScores = standings.some(s => s.totalScore > 0)
 
   return (
     <main className="leaderboard-page">
@@ -64,6 +72,14 @@ export default function Leaderboard() {
           />
         ))}
       </div>
+
+      {!hasScores && (
+        <div className="empty-state" style={{ marginTop: '2rem' }}>
+          <div className="empty-state-icon">🎮</div>
+          <h2>Race not started</h2>
+          <p>Sign in and enter your first score to get going.</p>
+        </div>
+      )}
 
       {user && <ActivityFeed leagueId={league.id} standings={standings} />}
     </main>

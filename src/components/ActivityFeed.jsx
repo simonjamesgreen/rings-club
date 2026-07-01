@@ -122,6 +122,10 @@ export default function ActivityFeed({ leagueId, standings }) {
               {' → season leader'}
             </>
           )
+        } else if (ev.event_type === 'use_cloud') {
+          desc = (
+            <>used by <b style={{ color: colorOf(ev.actor_player_id) }}>{nameOf(ev.actor_player_id)}</b> · 100% floor + shield</>
+          )
         } else {
           desc = <b style={{ color: colorOf(ev.actor_player_id) }}>{nameOf(ev.actor_player_id)}</b>
         }

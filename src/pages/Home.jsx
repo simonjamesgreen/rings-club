@@ -215,7 +215,7 @@ export default function Home() {
   const isQualified = qualifiesForShell(score)
   const others      = me ? standings.filter(s => s.player_id !== me.player_id) : []
   const shellDefs   = me ? [
-    { key: 'cloud',    icon: '☁️', label: 'Cloud',       sub: 'Effect coming soon',           count: me.clouds       },
+    { key: 'cloud',    icon: '☁️', label: 'Cloud',       sub: 'Day off: 100% floor + shell shield (lands tomorrow)', count: me.clouds },
     { key: 'red',      icon: '🔴', label: 'Red Shell',   sub: 'Halves today\'s leader — lands tomorrow', count: me.red_shells   },
     { key: 'green',    icon: '🟢', label: 'Green Shell', sub: 'Pick a target — lands tomorrow',       count: me.green_shells },
     { key: 'blue',     icon: '🔵', label: 'Blue Shell',  sub: 'Hits the season leader — lands tomorrow', count: me.blue_shells  },

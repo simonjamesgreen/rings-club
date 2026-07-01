@@ -313,46 +313,65 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Power-ups — only show if player has any */}
-            {shellDefs.some(s => s.count > 0) && (
-              <div className="admin-card">
-                <p className="admin-card-title">Power-Ups</p>
+            {/* Power-ups — always show so inventory is visible */}
+            <div className="admin-card">
+              <p className="admin-card-title">Power-Ups</p>
 
-                {fireMsg === 'success' && (
-                  <div className="alert alert-success" style={{ marginBottom: '0.75rem' }}>
-                    Fired! Resolves when today's scores are in.
-                  </div>
-                )}
-                {fireMsg?.startsWith('error:') && (
-                  <div className="alert alert-error" style={{ marginBottom: '0.75rem' }}>{fireMsg.slice(6)}</div>
-                )}
-
-                <div className="shell-fire-grid">
-                  {shellDefs.filter(s => s.count > 0).map(s => (
-                    <div key={s.key} className="shell-fire-card">
-                      <div className="shell-fire-top">
-                        <span className="shell-fire-label">{s.icon} {s.label}</span>
-                        <span className="shell-fire-count has-shells">{s.count}</span>
-                      </div>
-                      <p className="shell-fire-sub">{s.sub}</p>
-                      {s.key === 'green' && (
-                        <select className="shell-target-select" value={greenTarget}
-                          onChange={e => setGreenTarget(e.target.value)}>
-                          <option value="">Choose target…</option>
-                          {others.map(p => (
-                            <option key={p.player_id} value={p.player_id}>{p.player.display_name}</option>
-                          ))}
-                        </select>
-                      )}
-                      <button className="shell-fire-btn" disabled={firing === s.key}
-                        onClick={() => handleFire(s.key)}>
-                        {firing === s.key ? 'Firing…' : 'Fire'}
-                      </button>
-                    </div>
-                  ))}
+              {fireMsg === 'success' && (
+                <div className="alert alert-success" style={{ marginBottom: '0.75rem' }}>
+                  Fired! Resolves when today's scores are in.
                 </div>
+              )}
+              {fireMsg?.startsWith('error:') && (
+                <div className="alert alert-error" style={{ marginBottom: '0.75rem' }}>{fireMsg.slice(6)}</div>
+              )}
+
+              <div className="shell-fire-grid">
+                {shellDefs.map(s => (
+                  <div key={s.key} className={`shell-fire-card ${s.count < 1 ? 'shell-empty' : ''}`}>
+                    <div className="shell-fire-top">
+                      <span className="shell-fire-label">{s.icon} {s.label}</span>
+                      <span className={`shell-fire-count ${s.count > 0 ? 'has-shells' : ''}`}>{s.count}</span>
+                    </div>
+                    <p className="shell-fire-sub">{s.sub}</p>
+                    {s.key === 'green' && s.count > 0 && (
+                      <select className="shell-target-select" value={greenTarget}
+                        onChange={e => setGreenTarget(e.target.value)}>
+                        <option value="">Choose target…</option>
+                        {others.map(p => (
+                          <option key={p.player_id} value={p.player_id}>{p.player.display_name}</option>
+                        ))}
+                      </select>
+                    )}
+                    <button className="shell-fire-btn"
+                      disabled={s.count < 1 || firing === s.key}
+                      onClick={() => handleFire(s.key)}>
+                      {firing === s.key ? 'Firing…' : s.count < 1 ? 'None' : 'Fire'}
+                    </button>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+
+            {/* Everyone's inventory */}
+            <div className="admin-card">
+              <p className="admin-card-title">Everyone's Inventory</p>
+              <div className="inventory-grid">
+                {standings.map(s => (
+                  <div key={s.player_id} className="inventory-row">
+                    <span className="inventory-name" style={{ color: s.player.avatar_color }}>
+                      {s.player.display_name}
+                    </span>
+                    <div className="inventory-shells">
+                      <span className={s.red_shells   > 0 ? 'inv-shell inv-red'   : 'inv-shell inv-zero'}>🔴 {s.red_shells}</span>
+                      <span className={s.green_shells > 0 ? 'inv-shell inv-green' : 'inv-shell inv-zero'}>🟢 {s.green_shells}</span>
+                      <span className={s.blue_shells  > 0 ? 'inv-shell inv-blue'  : 'inv-shell inv-zero'}>🔵 {s.blue_shells}</span>
+                      <span className={s.mushrooms    > 0 ? 'inv-shell inv-mush'  : 'inv-shell inv-zero'}>🍄 {s.mushrooms}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <ActivityFeed leagueId={league.id} standings={standings} />
           </>

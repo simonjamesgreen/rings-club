@@ -185,9 +185,11 @@ export default function Home() {
     </div>
   )
 
-  const startDate = new Date(league.start_date).toLocaleDateString('en-GB', {
-    day: 'numeric', month: 'long', year: 'numeric'
+  const fmt = (d) => new Date(d).toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric'
   })
+  const startDate = fmt(league.start_date)
+  const endDate   = league.end_date ? fmt(league.end_date) : null
 
   // My Day computed
   const mc    = parseInt(inputs.move_calories)    || 0
@@ -212,7 +214,9 @@ export default function Home() {
       <section className="home-left">
         <header className="leaderboard-header">
           <h1 className="leaderboard-title">{league.name}</h1>
-          <p className="leaderboard-meta">Started {startDate}</p>
+          <p className="leaderboard-meta">
+            {endDate ? `${startDate} – ${endDate}` : `Started ${startDate}`}
+          </p>
         </header>
 
         {/* Tab switcher */}

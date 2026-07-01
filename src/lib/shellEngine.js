@@ -43,9 +43,18 @@ export async function resolveAndGetStandings(leagueId) {
   const memberByPlayer = {}
   members.forEach(m => { memberByPlayer[m.player_id] = m })
 
+  // Filter to league date range (start_date to end_date inclusive)
+  const inRange = (date) => {
+    if (league.start_date && date < league.start_date) return false
+    if (league.end_date   && date > league.end_date)   return false
+    return true
+  }
+  const rangedScores = (scores || []).filter(s => inRange(s.date))
+  const rangedEvents = (events || []).filter(e => inRange(e.date))
+
   // Raw score lookup: rawScores[date][player_id] = number | undefined
   const rawScores = {}
-  scores.forEach(s => {
+  rangedScores.forEach(s => {
     const moveGoal = memberByPlayer[s.player_id]?.move_goal || 500
     const raw = calculateScore(s.move_calories, moveGoal, s.exercise_minutes, s.stand_hours)
     rawScores[s.date] = rawScores[s.date] || {}
@@ -61,7 +70,7 @@ export async function resolveAndGetStandings(leagueId) {
   members.forEach(m => { cumulativeTotal[m.player_id] = 0 })
 
   const eventsByDate = {}
-  events.forEach(e => {
+  rangedEvents.forEach(e => {
     eventsByDate[e.date] = eventsByDate[e.date] || []
     eventsByDate[e.date].push(e)
   })

@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
     supabase.auth.signInWithPassword({ email, password })
 
   const signUp = (email, password) =>
-    supabase.auth.signUp({ email, password })
+    supabase.auth.signUp({ email, password, options: { emailRedirectTo: 'https://rings-club.com/login' } })
 
   const signOut = () => supabase.auth.signOut()
 

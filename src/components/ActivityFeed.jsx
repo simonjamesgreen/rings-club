@@ -88,11 +88,11 @@ export default function ActivityFeed({ leagueId, standings }) {
         const icon  = SHELL_ICON[ev.event_type] ?? '💥'
         const name  = SHELL_NAME[ev.event_type] ?? ev.event_type
         const { time, date } = formatBST(ev.created_at)
-        const isFire = ev.event_type.startsWith('fire_')
-
         let statusBadge
         if (ev.status === 'pending')  statusBadge = <span className="status-badge pending">⏳ Lands tomorrow</span>
-        if (ev.status === 'applied')  statusBadge = <span className="status-badge applied">✓ Hit</span>
+        if (ev.status === 'applied')  statusBadge = ev.event_type === 'fire_blue_shell' || ev.event_type === 'use_mushroom' || ev.event_type === 'use_cloud'
+          ? <span className="status-badge applied">✓ Applied</span>
+          : <span className="status-badge applied">✓ Hit</span>
         if (ev.status === 'returned') statusBadge = <span className="status-badge returned">↩ Returned</span>
 
         let desc

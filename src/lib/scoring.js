@@ -13,10 +13,6 @@ export function qualifiesForShell(score) {
   return score >= 150
 }
 
-/** ≥90 exercise min qualifies for a mushroom */
-export function qualifiesForMushroom(exerciseMinutes) {
-  return exerciseMinutes >= 90
-}
 
 /** ≥300% = immune to shells */
 export function hasImmunity(score) {

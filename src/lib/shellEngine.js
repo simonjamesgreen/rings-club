@@ -299,7 +299,7 @@ export async function resolveAndGetStandings(leagueId) {
     const todayScore = todayScored.length
       ? Math.round(todayScored.reduce((a, b) => a + b, 0) / todayScored.length)
       : null
-    return { id: team.id, name: team.name, avatar_color: team.avatar_color, memberPlayers, totalScore: Math.round(teamTotal * 10) / 10, todayScore }
+    return { id: team.id, name: team.name, avatar_color: team.avatar_color, memberPlayers, totalScore: Math.round(teamTotal), todayScore }
   })
   teamStandings.sort((a, b) => b.totalScore - a.totalScore)
 

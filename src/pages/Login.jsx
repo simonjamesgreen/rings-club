@@ -13,7 +13,7 @@ export default function Login() {
   const [error,    setError]    = useState(null)
   const [message,  setMessage]  = useState(null)
 
-  if (user) return <Navigate to="/admin" />
+  if (user) return <Navigate to="/" />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -26,7 +26,7 @@ export default function Login() {
       if (error) {
         setError(error.message)
       } else {
-        navigate('/admin')
+        navigate('/')
       }
     } else {
       const { error } = await signUp(email, password)

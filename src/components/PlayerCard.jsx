@@ -1,6 +1,6 @@
 import { getRankDisplay } from '../lib/scoring'
 
-export default function PlayerCard({ rank, player, totalScore, todayScore, isImmune, isMe, shells }) {
+export default function PlayerCard({ rank, player, totalScore, todayScore, todayPoints, isImmune, isMe, shells }) {
   const isQualified = todayScore !== null && todayScore !== undefined && todayScore >= 150
   const hasAnyShells = shells.red > 0 || shells.green > 0 || shells.blue > 0 || shells.mushrooms > 0 || shells.clouds > 0
 
@@ -27,7 +27,14 @@ export default function PlayerCard({ rank, player, totalScore, todayScore, isImm
           <span className="score-label">pts</span>
         </div>
         <div className={`score-today ${isImmune ? 'immune' : isQualified ? 'qualifying' : ''}`}>
-          {todayScore !== null && todayScore !== undefined ? `${todayScore}% today` : '— no score'}
+          {todayScore !== null && todayScore !== undefined
+            ? <>
+                {todayScore}%
+                {todayPoints !== null && todayPoints !== undefined
+                  ? <span className="today-pts"> +{todayPoints}pts</span>
+                  : null}
+              </>
+            : '— no score'}
         </div>
       </div>
 
@@ -38,7 +45,7 @@ export default function PlayerCard({ rank, player, totalScore, todayScore, isImm
             {shells.green     > 0 && <span className="shell-count green">🟢 {shells.green}</span>}
             {shells.blue      > 0 && <span className="shell-count blue">🔵 {shells.blue}</span>}
             {shells.mushrooms > 0 && <span className="shell-count mush">🍄 {shells.mushrooms}</span>}
-            {shells.clouds     > 0 && <span className="shell-count cloud">☁️ {shells.clouds}</span>}
+            {shells.clouds    > 0 && <span className="shell-count cloud">☁️ {shells.clouds}</span>}
           </div>
         ) : (
           <span className="no-shells">—</span>

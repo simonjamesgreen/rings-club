@@ -88,6 +88,8 @@ export async function resolveAndGetStandings(leagueId) {
   }
 
   const today = new Date().toISOString().split('T')[0]
+  const RANK_POINTS     = [5, 4, 3, 2, 1]  // index 0 = 1st place
+  const dailyPointsByDate = {}
 
   for (const date of allDates) {
     const dayRaw     = rawScores[date]
@@ -233,6 +235,20 @@ export async function resolveAndGetStandings(leagueId) {
       if (!(pid in finalScores[date])) finalScores[date][pid] = effectiveRaw[pid]
       cumulativeTotal[pid] = (cumulativeTotal[pid] || 0) + finalScores[date][pid]
     }
+
+    // ── Award daily points (5-4-3-2-1 by rank, only for score > 0) ──
+    const scoredToday = playerIdsToday
+      .map(pid => ({ pid, score: finalScores[date][pid] }))
+      .filter(p => p.score > 0)
+      .sort((a, b) => b.score - a.score)
+
+    dailyPointsByDate[date] = {}
+    let rankIdx = 0
+    for (let i = 0; i < scoredToday.length; i++) {
+      if (i > 0 && scoredToday[i].score < scoredToday[i - 1].score) rankIdx = i
+      dailyPointsByDate[date][scoredToday[i].pid] =
+        RANK_POINTS[Math.min(rankIdx, RANK_POINTS.length - 1)]
+    }
   }
 
   // ── Persist resolutions ───────────────────────────────────────────
@@ -257,15 +273,16 @@ export async function resolveAndGetStandings(leagueId) {
 
   // ── Individual standings ──────────────────────────────────────────
   const standings = members.map(m => {
-    let total = 0
+    let totalPoints = 0
     for (const date of allDates) {
-      total += finalScores[date]?.[m.player_id] || 0
+      totalPoints += dailyPointsByDate[date]?.[m.player_id] || 0
     }
     return {
       ...m,
-      totalScore:  Math.round(total),
+      totalScore:  totalPoints,
       todayScore:  finalScores[today]?.[m.player_id] != null
         ? Math.round(finalScores[today][m.player_id]) : null,
+      todayPoints: dailyPointsByDate[today]?.[m.player_id] ?? null,
       todayImmune: (rawScores[today]?.[m.player_id] || 0) >= 300,
     }
   })
@@ -280,20 +297,20 @@ export async function resolveAndGetStandings(leagueId) {
   const teamStandings = (teamsData || []).map(team => {
     const memberIds     = (team.team_members || []).map(m => m.player_id)
     const memberPlayers = (team.team_members || []).map(m => m.players)
+    // Team uses same points system — average of members' daily points
     let teamTotal = 0
     for (const date of allDates) {
-      const dayScores = memberIds
-        .filter(pid => finalScores[date]?.[pid] !== undefined)
-        .map(pid => finalScores[date][pid])
-      if (dayScores.length) teamTotal += dayScores.reduce((a, b) => a + b, 0) / dayScores.length
+      const dayPts = memberIds
+        .map(pid => dailyPointsByDate[date]?.[pid] || 0)
+        .filter(p => p > 0)
+      if (dayPts.length) teamTotal += dayPts.reduce((a, b) => a + b, 0) / dayPts.length
     }
-    const todayMemberScores = memberIds
-      .filter(pid => finalScores[today]?.[pid] !== undefined)
-      .map(pid => finalScores[today][pid])
-    const todayScore = todayMemberScores.length
-      ? Math.round(todayMemberScores.reduce((a, b) => a + b, 0) / todayMemberScores.length)
+    const todayMemberPts = memberIds.map(pid => dailyPointsByDate[today]?.[pid] || 0)
+    const todayScored = todayMemberPts.filter(p => p > 0)
+    const todayScore = todayScored.length
+      ? Math.round(todayScored.reduce((a, b) => a + b, 0) / todayScored.length)
       : null
-    return { id: team.id, name: team.name, avatar_color: team.avatar_color, memberPlayers, totalScore: Math.round(teamTotal), todayScore }
+    return { id: team.id, name: team.name, avatar_color: team.avatar_color, memberPlayers, totalScore: Math.round(teamTotal * 10) / 10, todayScore }
   })
   teamStandings.sort((a, b) => b.totalScore - a.totalScore)
 

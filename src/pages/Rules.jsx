@@ -39,18 +39,38 @@ export default function Rules() {
       {/* SCORING */}
       <section className="rules-section">
         <h2 className="rules-section-title">Daily Scoring</h2>
+        <p className="rules-text" style={{ marginBottom: '1rem' }}>
+          Each day, your raw activity score is calculated from your Apple Watch rings.
+          Players are then ranked and awarded points based on where they finish.
+        </p>
         <div className="rules-formula">
-          Score = (Move Calories ÷ Move Goal) × 100%
+          Raw score = (Move Calories ÷ Move Goal) × 100%
         </div>
         <div className="rules-table" style={{ marginTop: '1rem' }}>
           <div className="rules-row">
             <span className="rules-row-label">Zero condition</span>
-            <span className="rules-row-value">Score is 0 if exercise &lt; 30 min OR stand hours &lt; 12</span>
+            <span className="rules-row-value">Raw score is 0 if exercise &lt; 30 min OR stand hours &lt; 12</span>
           </div>
           <div className="rules-row">
             <span className="rules-row-label">Immunity</span>
-            <span className="rules-row-value">Score ≥ 300% → no incoming shells can hit you that day</span>
+            <span className="rules-row-value">Raw score ≥ 300% → no incoming shells can hit you that day</span>
           </div>
+        </div>
+
+        <div className="rules-points-table">
+          <p className="rules-examples-title" style={{ marginTop: '1.25rem', marginBottom: '0.6rem' }}>Daily points</p>
+          <div className="points-grid">
+            <div className="points-row rank-1"><span className="points-rank">🥇 1st</span><span className="points-val">5 pts</span></div>
+            <div className="points-row rank-2"><span className="points-rank">🥈 2nd</span><span className="points-val">4 pts</span></div>
+            <div className="points-row rank-3"><span className="points-rank">🥉 3rd</span><span className="points-val">3 pts</span></div>
+            <div className="points-row"><span className="points-rank">4th</span><span className="points-val">2 pts</span></div>
+            <div className="points-row"><span className="points-rank">5th</span><span className="points-val">1 pt</span></div>
+            <div className="points-row"><span className="points-rank">No score</span><span className="points-val">0 pts</span></div>
+          </div>
+          <p className="rules-text" style={{ marginTop: '0.75rem', fontSize: '0.8rem' }}>
+            Points are awarded based on your <strong>final score</strong> for the day (after all power-up effects resolve).
+            Ties share the higher rank. The running leaderboard is your total accumulated points across all days.
+          </p>
         </div>
       </section>
 
@@ -84,7 +104,7 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Effect</span>
-              <span>Halves their daily score</span>
+              <span>Reduces their daily score by 25%</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">If blocked</span>
@@ -107,7 +127,7 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Effect</span>
-              <span>Halves their daily score</span>
+              <span>Reduces their daily score by 25%</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">If blocked</span>

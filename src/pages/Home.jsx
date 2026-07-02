@@ -261,7 +261,8 @@ export default function Home() {
                 todayScore={row.todayScore}
                 isImmune={row.todayImmune}
                 isMe={!!user && row.player?.email === user.email}
-                shells={{ red: row.red_shells, green: row.green_shells, blue: row.blue_shells, mushrooms: row.mushrooms, clouds: row.clouds }}
+                todayPoints={row.todayPoints}
+              shells={{ red: row.red_shells, green: row.green_shells, blue: row.blue_shells, mushrooms: row.mushrooms, clouds: row.clouds }}
               />
             ))}
             {!standings.some(s => s.totalScore > 0) && (

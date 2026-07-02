@@ -1034,3 +1034,52 @@ body::before {
   .powerup-card-wide { grid-column: 1; }
   .rules-row { grid-template-columns: 120px 1fr; }
 }
+
+/* ─── POINTS TABLE (rules page) ───────────── */
+.points-grid {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.points-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.875rem;
+  min-width: 70px;
+  gap: 0.2rem;
+}
+
+.points-row.rank-1 { border-color: var(--gold); }
+.points-row.rank-2 { border-color: var(--silver); }
+.points-row.rank-3 { border-color: var(--bronze); }
+
+.points-rank {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.points-val {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--gold);
+}
+
+/* ─── TODAY POINTS BADGE ──────────────────── */
+.today-pts {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin-left: 0.25rem;
+  background: rgba(255,215,0,0.12);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 3px;
+  padding: 0 0.25rem;
+  vertical-align: middle;
+}

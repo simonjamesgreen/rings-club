@@ -86,7 +86,7 @@ export default function Home() {
   }
 
   async function awardShellsIfEarned(score) {
-    // Threshold: 200%
+    // Threshold: 150% (qualifiesForShell)
     if (!qualifiesForShell(score)) return []
 
     // Only award once per day
@@ -349,7 +349,7 @@ export default function Home() {
                   <span className="score-preview-num">{score}%</span>
                   <span className="score-preview-tags">
                     {isImmune    && <span className="tag tag-immune">⚡ Immune</span>}
-                    {isQualified && !isImmune && <span className="tag tag-shell">🐚 Shell earned (200%+)</span>}
+                    {isQualified && !isImmune && <span className="tag tag-shell">🐚 Shell earned (150%+)</span>}
                     {earnsShroom && <span className="tag tag-shroom">🍄 Mushroom earned</span>}
                   </span>
                 </div>

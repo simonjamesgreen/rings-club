@@ -122,23 +122,27 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Target</span>
-              <span>The season leader (highest total points)</span>
+              <span>Yourself — this is a self-boost, not an attack</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Effect</span>
-              <span>Season leader's score for that day becomes equal to the daily leader's raw score</span>
+              <span>
+                Your score for that day becomes the same as whoever posted the highest score.
+                The top scorer is completely unaffected — they keep their score.
+                You just get a copy of it.
+              </span>
+            </div>
+            <div className="powerup-detail">
+              <span className="powerup-detail-label">Condition</span>
+              <span>You must still hit your own exercise (30+ min) AND stand (12+ hrs) targets. If you don't, you get 0 and the shell is consumed.</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">One per day</span>
-              <span>Only the earliest blue shell timestamp succeeds — others are returned</span>
+              <span>Only the earliest timestamp succeeds — if multiple people fire one, only the first benefits. Others get their shell back.</span>
             </div>
             <div className="powerup-detail">
-              <span className="powerup-detail-label">Self-fire</span>
-              <span>If you ARE the season leader, firing it on yourself gives you shell protection for the day (no score change)</span>
-            </div>
-            <div className="powerup-detail">
-              <span className="powerup-detail-label">If blocked</span>
-              <span>Shell returned to you</span>
+              <span className="powerup-detail-label">Interaction rule</span>
+              <span>Firing a blue shell uses your one daily powerup interaction slot</span>
             </div>
           </div>
 

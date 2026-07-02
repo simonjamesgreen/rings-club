@@ -59,6 +59,13 @@ export async function resolveAndGetStandings(leagueId) {
     rawMovePct[s.date][s.player_id] = Math.round((s.move_calories / moveGoal) * 100)
   })
 
+  // Lookup for exercise/stand data (needed for blue shell requirement check)
+  const scoreDetails = {}
+  rangedScores.forEach(s => {
+    scoreDetails[s.date] = scoreDetails[s.date] || {}
+    scoreDetails[s.date][s.player_id] = { exercise_minutes: s.exercise_minutes, stand_hours: s.stand_hours }
+  })
+
   const allDates = Object.keys(rawScores).sort()
 
   // Cumulative totals (for blue shell season leader calculation)
@@ -182,40 +189,41 @@ export async function resolveAndGetStandings(leagueId) {
         }
       }
 
-      // ── Blue Shell (auto-target: season leader) ───────────────────
+      // ── Blue Shell (self-boost: copy the day's top score) ──────────
+      // The FIRER gets the highest raw score of the day as their own.
+      // The top scorer is completely unaffected.
+      // Firer still needs to meet their own exercise/stand requirements.
+      // Only one blue shell benefits per day — first timestamp wins.
       else if (ev.event_type === 'fire_blue_shell') {
-        // Only one blue per day — first timestamp wins
         if (blueSucceededToday) {
           queueRefund(actor, 'blue_shells')
           dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: null, final_score_applied: null })
           continue
         }
-        if (!seasonLeaderPid || !(seasonLeaderPid in dayRaw)) continue
+        if (!(actor in dayRaw)) continue  // actor hasn't submitted scores yet
 
-        if (seasonLeaderPid === actor) {
-          // Self-protect: season leader uses blue on themselves
-          if (impacted.has(actor)) {
-            queueRefund(actor, 'blue_shells')
-            dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: actor, final_score_applied: null })
-          } else {
-            impacted.add(actor)
-            blueSucceededToday = true
-            dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: actor, final_score_applied: null })
-          }
+        if (impacted.has(actor)) {
+          // Already used their daily interaction
+          queueRefund(actor, 'blue_shells')
+          dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: actor, final_score_applied: null })
+          continue
+        }
+
+        blueSucceededToday = true
+        impacted.add(actor)
+
+        // Check firer meets their own exercise/stand requirements
+        const details = scoreDetails[date]?.[actor]
+        const meetsReqs = details && details.exercise_minutes >= 30 && details.stand_hours >= 12
+
+        if (meetsReqs && leaderPid) {
+          // Give firer the day's top raw score (top scorer unaffected)
+          effectiveRaw[actor] = leaderRawScore
+          finalScores[date][actor] = leaderRawScore
+          dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: actor, final_score_applied: leaderRawScore })
         } else {
-          // Target the season leader
-          const shouldReturn = immune.has(seasonLeaderPid) || impacted.has(seasonLeaderPid)
-          if (shouldReturn) {
-            queueRefund(actor, 'blue_shells')
-            dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: seasonLeaderPid, final_score_applied: null })
-          } else {
-            // Effect: season leader's score becomes today's leader's RAW score
-            effectiveRaw[seasonLeaderPid] = leaderRawScore
-            finalScores[date][seasonLeaderPid] = leaderRawScore
-            impacted.add(seasonLeaderPid)
-            blueSucceededToday = true
-            dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: seasonLeaderPid, final_score_applied: leaderRawScore })
-          }
+          // Requirements not met — shell consumed, score stays as 0
+          dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: actor, final_score_applied: 0 })
         }
       }
     }

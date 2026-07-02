@@ -119,7 +119,10 @@ export default function ActivityFeed({ leagueId, standings }) {
           desc = (
             <>
               <b style={{ color: colorOf(ev.actor_player_id) }}>{nameOf(ev.actor_player_id)}</b>
-              {' → season leader'}
+              {ev.status === 'applied'
+                ? ` copied the day's top score (${ev.final_score_applied != null ? Math.round(ev.final_score_applied) + '%' : '—'})`
+                : ' · returned'
+              }
             </>
           )
         } else if (ev.event_type === 'use_cloud') {

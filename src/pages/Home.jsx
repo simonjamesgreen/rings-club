@@ -218,7 +218,7 @@ export default function Home() {
     { key: 'cloud',    icon: '☁️', label: 'Cloud',       sub: 'Day off: 100% floor + shell shield (lands tomorrow)', count: me.clouds },
     { key: 'red',      icon: '🔴', label: 'Red Shell',   sub: 'Halves today\'s leader — lands tomorrow', count: me.red_shells   },
     { key: 'green',    icon: '🟢', label: 'Green Shell', sub: 'Pick a target — lands tomorrow',       count: me.green_shells },
-    { key: 'blue',     icon: '🔵', label: 'Blue Shell',  sub: 'Hits the season leader — lands tomorrow', count: me.blue_shells  },
+    { key: 'blue',     icon: '🔵', label: 'Blue Shell',  sub: 'Copy the day\'s top score as your own — lands tomorrow', count: me.blue_shells  },
     { key: 'mushroom', icon: '🍄', label: 'Mushroom',    sub: '+50% to your score — lands tomorrow', count: me.mushrooms    },
   ] : []
 

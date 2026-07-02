@@ -14,18 +14,15 @@ import { calculateScore } from './scoring'
  * Pre-determined before the queue runs:
  *   leaderPid       = player with highest RAW score today (red shell target)
  *   leaderRawScore  = their raw score (blue shell effect value)
- *   seasonLeaderPid = player with highest cumulative total so far (blue target)
  *   immune          = players whose raw score >= 300% (immune to incoming shells)
  *
  * Queue rules (timestamp order):
  *   use_mushroom   → self: if already impacted → return; else → raw * 1.5, impacted
  *   use_cloud      → self: if already impacted → return; else → MAX(100, movePct), impacted
- *   fire_red_shell → target = leaderPid: if immune/impacted/self → return; else → ×0.5, impacted
- *   fire_green_shell → target = manual: if immune/impacted → return; else → ×0.5, impacted
- *   fire_blue_shell → target = seasonLeader:
- *       only one blue per day (first timestamp wins)
- *       self-fire = self-protect (marks self impacted, no score change)
- *       else: target gets leaderRawScore; if immune/impacted → return
+ *   fire_red_shell → target = leaderPid (by raw score): if immune/impacted/self → return; else → ×0.75 (25% off)
+ *   fire_green_shell → target = manual: if immune/impacted → return; else → ×0.75 (25% off)
+ *   fire_blue_shell → self-boost: firer gets day top raw score (if they meet exercise/stand)
+ *       only one blue per day; first timestamp wins, others returned
  */
 
 export async function resolveAndGetStandings(leagueId) {
@@ -106,15 +103,6 @@ export async function resolveAndGetStandings(leagueId) {
     }
     const leaderRawScore = leaderPid ? dayRaw[leaderPid] : 0
 
-    // Season leader = highest cumulative total BEFORE this date
-    let seasonLeaderPid = null, seasonLeaderTotal = -Infinity
-    for (const pid of Object.keys(cumulativeTotal)) {
-      if (cumulativeTotal[pid] > seasonLeaderTotal) {
-        seasonLeaderTotal = cumulativeTotal[pid]
-        seasonLeaderPid = pid
-      }
-    }
-
     // Immunity: raw score >= 300% (incoming shells bounce, self-powerups still usable)
     const immune = new Set(playerIdsToday.filter(pid => dayRaw[pid] >= 300))
 
@@ -161,6 +149,7 @@ export async function resolveAndGetStandings(leagueId) {
       // ── Red Shell (auto-target: daily leader) ─────────────────────
       else if (ev.event_type === 'fire_red_shell') {
         if (!leaderPid || !(leaderPid in dayRaw)) continue  // can't resolve yet
+        if (leaderRaw <= 0) continue  // no valid positive-scoring leader
         const shouldReturn = leaderPid === actor            // can't hit yourself
           || immune.has(leaderPid)
           || impacted.has(leaderPid)
@@ -168,7 +157,7 @@ export async function resolveAndGetStandings(leagueId) {
           queueRefund(actor, 'red_shells')
           dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: leaderPid, final_score_applied: null })
         } else {
-          effectiveRaw[leaderPid] = effectiveRaw[leaderPid] * 0.5
+          effectiveRaw[leaderPid] = effectiveRaw[leaderPid] * 0.75
           finalScores[date][leaderPid] = effectiveRaw[leaderPid]
           impacted.add(leaderPid)
           dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: leaderPid, final_score_applied: effectiveRaw[leaderPid] })
@@ -184,7 +173,7 @@ export async function resolveAndGetStandings(leagueId) {
           queueRefund(actor, 'green_shells')
           dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: target, final_score_applied: null })
         } else {
-          effectiveRaw[target] = effectiveRaw[target] * 0.5
+          effectiveRaw[target] = effectiveRaw[target] * 0.75
           finalScores[date][target] = effectiveRaw[target]
           impacted.add(target)
           dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: target, final_score_applied: effectiveRaw[target] })

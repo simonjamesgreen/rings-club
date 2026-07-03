@@ -49,7 +49,7 @@ export default function Rules() {
         <div className="rules-table" style={{ marginTop: '1rem' }}>
           <div className="rules-row">
             <span className="rules-row-label">Zero condition</span>
-            <span className="rules-row-value">Raw score is 0 if exercise &lt; 30 min OR stand hours &lt; 12</span>
+            <span className="rules-row-value">Raw score is 0 if exercise &lt; 30 min OR stand hours &lt; 10</span>
           </div>
           <div className="rules-row">
             <span className="rules-row-label">Immunity</span>
@@ -78,7 +78,7 @@ export default function Rules() {
       <section className="rules-section">
         <h2 className="rules-section-title">Earning Shells</h2>
         <p className="rules-text">
-          Hit <strong>125%+ of your Move goal</strong> AND complete <strong>30+ minutes exercise</strong> AND <strong>12+ stand hours</strong> — a shell is awarded automatically when you save your score.
+          Hit <strong>125%+ of your Move goal</strong> AND complete <strong>30+ minutes exercise</strong> AND <strong>10+ stand hours</strong> — a shell is awarded automatically when you save your score.
         </p>
 
         <div className="rules-table" style={{ marginTop: '1rem' }}>
@@ -165,7 +165,7 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Condition</span>
-              <span>You must still hit your own exercise (30+ min) AND stand (12+ hrs) targets. If you don't, you get 0 and the shell is consumed.</span>
+              <span>You must still hit your own exercise (30+ min) AND stand (10+ hrs) targets. If you don't, you get 0 and the shell is consumed.</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">One per day</span>
@@ -278,14 +278,14 @@ export default function Rules() {
       <section className="rules-section">
         <h2 className="rules-section-title">Team Scoring</h2>
         <div className="rules-teams">
-          <div className="rules-team" style={{ '--team-color': '#b694e8' }}>
-            <span className="rules-team-name">Wiggy &amp; Zee</span>
+          <div className="rules-team" style={{ '--team-color': '#ff6b35' }}>
+            <span className="rules-team-name">Moo &amp; Zee</span>
           </div>
           <div className="rules-team" style={{ '--team-color': '#2da2bb' }}>
             <span className="rules-team-name">Simon &amp; Matt</span>
           </div>
-          <div className="rules-team" style={{ '--team-color': '#ffd700' }}>
-            <span className="rules-team-name">Moo</span>
+          <div className="rules-team" style={{ '--team-color': '#4a86e8' }}>
+            <span className="rules-team-name">Wiggy</span>
           </div>
         </div>
         <p className="rules-text" style={{ marginTop: '1rem' }}>

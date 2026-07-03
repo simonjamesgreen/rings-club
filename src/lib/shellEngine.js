@@ -205,7 +205,7 @@ export async function resolveAndGetStandings(leagueId) {
 
         // Check firer meets their own exercise/stand requirements
         const details = scoreDetails[date]?.[actor]
-        const meetsReqs = details && details.exercise_minutes >= 30 && details.stand_hours >= 12
+        const meetsReqs = details && details.exercise_minutes >= 30 && details.stand_hours >= 10
 
         if (meetsReqs && leaderPid) {
           // Give firer the day's top raw score (top scorer unaffected)

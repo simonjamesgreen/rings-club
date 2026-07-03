@@ -77,7 +77,7 @@ export default function Rules() {
       {/* SHELL EARNING */}
       <section className="rules-section">
         <h2 className="rules-section-title">Earning Shells</h2>
-        <p className="rules-text">Hit <strong>150%+</strong> on your daily score and you automatically earn one shell when you submit.</p>
+        <p className="rules-text">Hit <strong>125%+</strong> on your daily score and you automatically earn one shell when you submit.</p>
         <p className="rules-text" style={{ marginTop: '0.75rem' }}>
           Shells are earned in a <strong>guaranteed random cycle</strong> across all four types
           (🔴 🟢 🔵 🍄). You'll never get the same type twice until you've collected all four —

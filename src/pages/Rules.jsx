@@ -77,8 +77,19 @@ export default function Rules() {
       {/* SHELL EARNING */}
       <section className="rules-section">
         <h2 className="rules-section-title">Earning Shells</h2>
-        <p className="rules-text">Hit <strong>125%+</strong> on your daily score and you automatically earn one shell when you submit.</p>
-        <p className="rules-text" style={{ marginTop: '0.75rem' }}>
+        <p className="rules-text">
+          Hit <strong>125%+ of your Move goal</strong> AND complete <strong>30+ minutes exercise</strong> AND <strong>12+ stand hours</strong> — a shell is awarded automatically when you save your score.
+        </p>
+
+        <div className="rules-table" style={{ marginTop: '1rem' }}>
+          <div className="rules-row"><span className="rules-row-label">Simon</span><span className="rules-row-value">1,125 cal (125% of 900)</span></div>
+          <div className="rules-row"><span className="rules-row-label">Wiggy</span><span className="rules-row-value">825 cal (125% of 660)</span></div>
+          <div className="rules-row"><span className="rules-row-label">Zee</span><span className="rules-row-value">813 cal (125% of 650)</span></div>
+          <div className="rules-row"><span className="rules-row-label">Moo</span><span className="rules-row-value">813 cal (125% of 650)</span></div>
+          <div className="rules-row"><span className="rules-row-label">Matt</span><span className="rules-row-value">713 cal (125% of 570)</span></div>
+        </div>
+
+        <p className="rules-text" style={{ marginTop: '1rem' }}>
           Shells are earned in a <strong>guaranteed random cycle</strong> across all four types
           (🔴 🟢 🔵 🍄). You'll never get the same type twice until you've collected all four —
           then the cycle resets and starts again in a new random order.

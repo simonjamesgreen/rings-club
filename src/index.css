@@ -27,6 +27,8 @@ html, body {
   font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
+  /* Push content below iOS status bar in PWA/full-screen mode */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 #root { min-height: 100vh; display: flex; flex-direction: column; }
@@ -45,7 +47,7 @@ body::before {
     #000 8px, #000 16px
   );
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: env(safe-area-inset-top, 0px); left: 0; right: 0;
   z-index: 200;
 }
 
@@ -58,7 +60,7 @@ body::before {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 4px;
+  top: calc(4px + env(safe-area-inset-top, 0px));
   z-index: 100;
 }
 

@@ -281,7 +281,7 @@ export default function Rules() {
           <div className="rules-team" style={{ '--team-color': '#ff6b35' }}>
             <span className="rules-team-name">Moo &amp; Zee</span>
           </div>
-          <div className="rules-team" style={{ '--team-color': '#2da2bb' }}>
+          <div className="rules-team" style={{ '--team-color': '#43d692' }}>
             <span className="rules-team-name">Simon &amp; Matt</span>
           </div>
           <div className="rules-team" style={{ '--team-color': '#4a86e8' }}>

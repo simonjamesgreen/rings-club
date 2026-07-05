@@ -85,7 +85,7 @@ export async function resolveAndGetStandings(leagueId) {
   }
 
   const today = new Date().toISOString().split('T')[0]
-  const RANK_POINTS     = [5, 4, 3, 2, 1]  // index 0 = 1st place
+  const RANK_POINTS     = [4, 3, 2, 1]  // index 0 = 1st place (4 players)
   const dailyPointsByDate = {}
 
   for (const date of allDates) {

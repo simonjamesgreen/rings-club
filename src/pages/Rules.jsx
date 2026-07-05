@@ -60,11 +60,10 @@ export default function Rules() {
         <div className="rules-points-table">
           <p className="rules-examples-title" style={{ marginTop: '1.25rem', marginBottom: '0.6rem' }}>Daily points</p>
           <div className="points-grid">
-            <div className="points-row rank-1"><span className="points-rank">🥇 1st</span><span className="points-val">5 pts</span></div>
-            <div className="points-row rank-2"><span className="points-rank">🥈 2nd</span><span className="points-val">4 pts</span></div>
-            <div className="points-row rank-3"><span className="points-rank">🥉 3rd</span><span className="points-val">3 pts</span></div>
-            <div className="points-row"><span className="points-rank">4th</span><span className="points-val">2 pts</span></div>
-            <div className="points-row"><span className="points-rank">5th</span><span className="points-val">1 pt</span></div>
+            <div className="points-row rank-1"><span className="points-rank">🥇 1st</span><span className="points-val">4 pts</span></div>
+            <div className="points-row rank-2"><span className="points-rank">🥈 2nd</span><span className="points-val">3 pts</span></div>
+            <div className="points-row rank-3"><span className="points-rank">🥉 3rd</span><span className="points-val">2 pts</span></div>
+            <div className="points-row"><span className="points-rank">4th</span><span className="points-val">1 pt</span></div>
             <div className="points-row"><span className="points-rank">No score</span><span className="points-val">0 pts</span></div>
           </div>
           <p className="rules-text" style={{ marginTop: '0.75rem', fontSize: '0.8rem' }}>

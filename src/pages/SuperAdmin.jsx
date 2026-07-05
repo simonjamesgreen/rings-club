@@ -200,7 +200,7 @@ export default function SuperAdmin() {
                     goal: {m.move_goal} cal
                   </span>
                 </span>
-                <span className={`score-preview ${score >= 300 ? 'immune' : score >= 150 ? 'qualifying' : ''}`}>
+                <span className={`score-preview ${score >= 300 ? 'immune' : score >= 125 ? 'qualifying' : ''}`}>
                   {score > 0 ? `${score}%` : '—'}
                 </span>
               </div>

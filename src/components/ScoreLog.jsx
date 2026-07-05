@@ -24,13 +24,14 @@ export default function ScoreLog({ leagueId, standings }) {
   useEffect(() => { load() }, [leagueId])
 
   async function load() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('daily_scores')
       .select('*, player:players(display_name, avatar_color)')
       .eq('league_id', leagueId)
       .order('updated_at', { ascending: false })
       .limit(30)
-    setEntries(data || [])
+    if (error) console.error('ScoreLog error:', error)
+    setEntries((data || []).filter(e => e.player))  // guard against null joins
   }
 
   const goalOf = pid => standings.find(s => s.player_id === pid)?.move_goal || 500
@@ -48,8 +49,8 @@ export default function ScoreLog({ leagueId, standings }) {
         return (
           <div key={e.id} className="score-log-row">
             <div className="score-log-left">
-              <span className="score-log-name" style={{ color: e.player.avatar_color }}>
-                {e.player.display_name}
+              <span className="score-log-name" style={{ color: e.player?.avatar_color || '#888' }}>
+                {e.player?.display_name || '?'}
               </span>
               <span className="score-log-date">{exDate}</span>
             </div>

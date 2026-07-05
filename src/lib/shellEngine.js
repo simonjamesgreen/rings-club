@@ -263,12 +263,19 @@ export async function resolveAndGetStandings(leagueId) {
   // ── Individual standings ──────────────────────────────────────────
   const standings = members.map(m => {
     let totalPoints = 0
+    let scoreSum = 0
+    let daysScored = 0
     for (const date of allDates) {
       totalPoints += dailyPointsByDate[date]?.[m.player_id] || 0
+      if (finalScores[date]?.[m.player_id] != null) {
+        scoreSum += finalScores[date][m.player_id]
+        daysScored++
+      }
     }
     return {
       ...m,
       totalScore:  totalPoints,
+      avgScore:    daysScored > 0 ? Math.round(scoreSum / daysScored) : null,
       todayScore:  finalScores[today]?.[m.player_id] != null
         ? Math.round(finalScores[today][m.player_id]) : null,
       todayPoints: dailyPointsByDate[today]?.[m.player_id] ?? null,

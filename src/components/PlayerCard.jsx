@@ -1,6 +1,6 @@
 import { getRankDisplay } from '../lib/scoring'
 
-export default function PlayerCard({ rank, player, totalScore, todayScore, todayPoints, isImmune, isMe, shells }) {
+export default function PlayerCard({ rank, player, totalScore, avgScore, todayScore, todayPoints, isImmune, isMe, shells }) {
   const isQualified = todayScore !== null && todayScore !== undefined && todayScore >= 150
   const hasAnyShells = shells.red > 0 || shells.green > 0 || shells.blue > 0 || shells.mushrooms > 0 || shells.clouds > 0
 
@@ -15,6 +15,9 @@ export default function PlayerCard({ rank, player, totalScore, todayScore, today
         <span className="player-name" style={{ color: player.avatar_color }}>
           {player.display_name}
           {isMe && <span className="you-tag">you</span>}
+          {avgScore !== null && avgScore !== undefined && (
+            <span className="avg-badge">avg {avgScore}%</span>
+          )}
         </span>
         <div className="player-badges">
           {isImmune && <span className="badge badge-immune">⚡ Immune</span>}

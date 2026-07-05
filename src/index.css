@@ -1150,3 +1150,18 @@ body::before {
   font-weight: 700;
   color: var(--border-bright);
 }
+
+/* ─── AVERAGE SCORE BADGE ─────────────────── */
+.avg-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}

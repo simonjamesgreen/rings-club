@@ -289,6 +289,7 @@ export default function Home() {
                 isImmune={row.todayImmune}
                 isMe={!!user && row.player?.email === user.email}
                 todayPoints={row.todayPoints}
+              avgScore={row.avgScore}
               shells={{ red: row.red_shells, green: row.green_shells, blue: row.blue_shells, mushrooms: row.mushrooms, clouds: row.clouds }}
               />
             ))}

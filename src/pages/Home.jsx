@@ -23,7 +23,11 @@ export default function Home() {
 
   // My Day
   const [me,           setMe]           = useState(null)
-  const [date,         setDate]         = useState(new Date().toISOString().split('T')[0])
+  const [date,         setDate]         = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(d)
+  })
   const [inputs,       setInputs]       = useState({ move_calories: '', exercise_minutes: '', stand_hours: '' })
   const [saving,       setSaving]       = useState(false)
   const [saveMsg,      setSaveMsg]      = useState(null)

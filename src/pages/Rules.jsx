@@ -289,12 +289,12 @@ export default function Rules() {
           </div>
         </div>
         <p className="rules-text" style={{ marginTop: '1rem' }}>
-          Team daily score = average of each team member's individual daily score (after all powerup effects).
-          Team total = sum of all daily team scores across the competition.
+          Team score = combined points of both team members added together each day.
+          The team with the highest total points across all 15 days wins.
         </p>
         <p className="rules-text" style={{ marginTop: '0.5rem' }}>
-          If one team member hasn't submitted yet, the team score uses whoever has.
-          It updates automatically as scores come in.
+          Example: Moo gets 5pts and Zee gets 3pts → Moo &amp; Zee score 8pts that day.
+          If a team member hasn't submitted, their points are 0 for that day.
         </p>
       </section>
 

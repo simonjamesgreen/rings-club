@@ -286,19 +286,15 @@ export async function resolveAndGetStandings(leagueId) {
   const teamStandings = (teamsData || []).map(team => {
     const memberIds     = (team.team_members || []).map(m => m.player_id)
     const memberPlayers = (team.team_members || []).map(m => m.players)
-    // Team uses same points system — average of members' daily points
+    // Team score = combined (sum) of members' daily points
     let teamTotal = 0
     for (const date of allDates) {
-      const dayPts = memberIds
-        .map(pid => dailyPointsByDate[date]?.[pid] || 0)
-        .filter(p => p > 0)
-      if (dayPts.length) teamTotal += dayPts.reduce((a, b) => a + b, 0) / dayPts.length
+      const dayPts = memberIds.map(pid => dailyPointsByDate[date]?.[pid] || 0)
+      teamTotal += dayPts.reduce((a, b) => a + b, 0)
     }
     const todayMemberPts = memberIds.map(pid => dailyPointsByDate[today]?.[pid] || 0)
-    const todayScored = todayMemberPts.filter(p => p > 0)
-    const todayScore = todayScored.length
-      ? Math.round(todayScored.reduce((a, b) => a + b, 0) / todayScored.length)
-      : null
+    const todayTotal = todayMemberPts.reduce((a, b) => a + b, 0)
+    const todayScore = todayTotal > 0 ? todayTotal : null
     return { id: team.id, name: team.name, avatar_color: team.avatar_color, memberPlayers, totalScore: Math.round(teamTotal), todayScore }
   })
   teamStandings.sort((a, b) => b.totalScore - a.totalScore)

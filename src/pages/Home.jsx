@@ -316,7 +316,6 @@ export default function Home() {
           </div>
         )}
         <ActivityFeed leagueId={league.id} standings={standings} />
-        <ScoreLog leagueId={league.id} standings={standings} />
       </section>
 
       {/* ── RIGHT: MY DAY ── */}
@@ -458,6 +457,8 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            <ScoreLog leagueId={league.id} standings={standings} />
 
           </>
         )}

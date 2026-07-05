@@ -1085,3 +1085,68 @@ body::before {
   padding: 0 0.25rem;
   vertical-align: middle;
 }
+
+/* ─── SCORE LOG ───────────────────────────── */
+.score-log {
+  margin-top: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.score-log-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.score-log-row:last-child { border-bottom: none; }
+
+.score-log-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.score-log-name {
+  font-size: 0.85rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.score-log-date {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.score-log-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
+.score-log-pct {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--text);
+}
+.score-log-pct.qualifying { color: var(--green); }
+.score-log-pct.immune     { color: var(--gold); }
+
+.score-log-detail {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.score-log-time {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--border-bright);
+}

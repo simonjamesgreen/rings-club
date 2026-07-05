@@ -7,6 +7,7 @@ import { useAuth } from '../lib/auth'
 import PlayerCard from '../components/PlayerCard'
 import TeamCard from '../components/TeamCard'
 import ActivityFeed from '../components/ActivityFeed'
+import ScoreLog from '../components/ScoreLog'
 
 export default function Home() {
   const { user } = useAuth()
@@ -154,6 +155,7 @@ export default function Home() {
       const { error: ue } = await supabase.from('daily_scores').upsert({
         league_id: league.id, player_id: me.player_id, date,
         move_calories: mc, exercise_minutes: em, stand_hours: sh,
+        updated_at: new Date().toISOString(),
       }, { onConflict: 'league_id,player_id,date' })
       if (ue) throw ue
 
@@ -313,6 +315,7 @@ export default function Home() {
           </div>
         )}
         <ActivityFeed leagueId={league.id} standings={standings} />
+        <ScoreLog leagueId={league.id} standings={standings} />
       </section>
 
       {/* ── RIGHT: MY DAY ── */}

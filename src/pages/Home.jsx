@@ -14,8 +14,9 @@ export default function Home() {
   // Shared
   const [league,    setLeague]    = useState(null)
   const [standings, setStandings] = useState([])
-  const [loading,   setLoading]   = useState(true)
-  const [error,     setError]     = useState(null)
+  const [loading,      setLoading]      = useState(true)
+  const [initialized,  setInitialized]  = useState(false)
+  const [error,        setError]        = useState(null)
 
   const [teamStandings, setTeamStandings] = useState([])
   const [activeTab,     setActiveTab]     = useState('individual') // 'individual' | 'teams'

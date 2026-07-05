@@ -371,7 +371,6 @@ export default function Home() {
                   <span className="score-preview-tags">
                     {isImmune    && <span className="tag tag-immune">⚡ Immune</span>}
                     {isQualified && !isImmune && <span className="tag tag-shell">🐚 Shell earned (125%+)</span>}
-                    {earnsShroom && <span className="tag tag-shroom">🍄 Mushroom earned</span>}
                   </span>
                 </div>
               )}

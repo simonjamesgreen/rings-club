@@ -31,12 +31,12 @@ export default function Home() {
   const [fireMsg,      setFireMsg]      = useState(null)
   const [greenTarget,  setGreenTarget]  = useState('')
 
-  useEffect(() => { load() }, [user])
+  useEffect(() => { load() }, [user?.id])
   useEffect(() => { if (me && league) loadExisting() }, [date, me?.player_id])
 
   async function load() {
     try {
-      setLoading(true)
+      if (!initialized) setLoading(true)
       const { data: l, error: le } = await supabase
         .from('leagues').select('*').eq('status', 'active').single()
       if (le) throw le
@@ -57,6 +57,7 @@ export default function Home() {
       setError(err.message)
     } finally {
       setLoading(false)
+      setInitialized(true)
     }
   }
 

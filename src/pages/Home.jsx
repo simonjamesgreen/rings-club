@@ -140,19 +140,38 @@ export default function Home() {
       const em = parseInt(inputs.exercise_minutes) || 0
       const sh = parseInt(inputs.stand_hours)      || 0
 
+      if (mc === 0 && em === 0 && sh === 0) {
+        setSaveMsg('error:Please enter at least one value before saving')
+        setSaving(false)
+        return
+      }
+
       const { error: ue } = await supabase.from('daily_scores').upsert({
         league_id: league.id, player_id: me.player_id, date,
         move_calories: mc, exercise_minutes: em, stand_hours: sh,
       }, { onConflict: 'league_id,player_id,date' })
       if (ue) throw ue
 
-      const score = calculateScore(mc, me.move_goal, em, sh)
-      const earned = await awardShellsIfEarned(score)
+      // Score saved — now award shells and refresh (errors here don't undo the save)
+      try {
+        const score = calculateScore(mc, me.move_goal, em, sh)
+        const earned = await awardShellsIfEarned(score)
+        setEarnedShells(earned)
+      } catch (shellErr) {
+        console.error('Shell award error:', shellErr)
+      }
+
       setSaveMsg('success')
-      setEarnedShells(earned)
-      await refreshAll()
+
+      try {
+        await refreshAll()
+      } catch (refreshErr) {
+        console.error('Refresh error:', refreshErr)
+        // Score was saved successfully even if refresh failed
+      }
     } catch (err) {
-      setSaveMsg('error:' + err.message)
+      console.error('Save error:', err)
+      setSaveMsg('error:' + (err.message || 'Something went wrong — please try again'))
     } finally {
       setSaving(false)
     }
@@ -324,21 +343,21 @@ export default function Home() {
               <div className="score-entry-vertical">
                 <div className="score-entry-field">
                   <label className="score-entry-label">Move Cal</label>
-                  <input type="number" min="0" max="9999" className="score-entry-input"
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" className="score-entry-input"
                     value={inputs.move_calories}
                     onChange={e => setInputs(p => ({ ...p, move_calories: e.target.value }))}
                     placeholder="0" inputMode="numeric" />
                 </div>
                 <div className="score-entry-field">
                   <label className="score-entry-label">Exercise Min</label>
-                  <input type="number" min="0" max="180" className="score-entry-input"
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" className="score-entry-input"
                     value={inputs.exercise_minutes}
                     onChange={e => setInputs(p => ({ ...p, exercise_minutes: e.target.value }))}
                     placeholder="0" inputMode="numeric" />
                 </div>
                 <div className="score-entry-field">
                   <label className="score-entry-label">Stand Hrs</label>
-                  <input type="number" min="0" max="24" className="score-entry-input"
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" className="score-entry-input"
                     value={inputs.stand_hours}
                     onChange={e => setInputs(p => ({ ...p, stand_hours: e.target.value }))}
                     placeholder="0" inputMode="numeric" />

@@ -79,9 +79,9 @@ export default function SuperAdmin() {
         if (!inp || (!inp.move_calories && !inp.exercise_minutes && !inp.stand_hours)) continue
         const { error } = await supabase.from('daily_scores').upsert({
           league_id: league.id, player_id: m.player_id, date,
-          move_calories:    parseInt(inp.move_calories)    || 0,
-          exercise_minutes: parseInt(inp.exercise_minutes) || 0,
-          stand_hours:      parseInt(inp.stand_hours)      || 0,
+          move_calories:    parseInt(inp.move_calories) || 0,
+          exercise_minutes: inp.exercise_hit ? 30 : 0,
+          stand_hours:      inp.stand_hit ? 10 : 0,
         }, { onConflict: 'league_id,player_id,date' })
         if (error) throw error
       }
@@ -188,8 +188,8 @@ export default function SuperAdmin() {
           const score = calculateScore(
             parseInt(inp.move_calories)    || 0,
             m.move_goal,
-            parseInt(inp.exercise_minutes) || 0,
-            parseInt(inp.stand_hours)      || 0,
+            inp.exercise_hit ? 30 : 0,
+            inp.stand_hit ? 10 : 0,
           )
           return (
             <div key={m.player_id} className="superadmin-player-row">
@@ -207,24 +207,22 @@ export default function SuperAdmin() {
               <div className="superadmin-inputs">
                 <div className="score-entry-field">
                   <label className="score-entry-label">Move Cal</label>
-                  <input type="number" min="0" max="9999" className="score-entry-input"
+                  <input type="text" inputMode="numeric" pattern="[0-9]*" className="score-entry-input"
                     value={inp.move_calories}
                     onChange={e => setField(m.player_id, 'move_calories', e.target.value)}
-                    placeholder="0" inputMode="numeric" />
+                    placeholder="0" />
                 </div>
-                <div className="score-entry-field">
-                  <label className="score-entry-label">Exercise Min</label>
-                  <input type="number" min="0" max="180" className="score-entry-input"
-                    value={inp.exercise_minutes}
-                    onChange={e => setField(m.player_id, 'exercise_minutes', e.target.value)}
-                    placeholder="0" inputMode="numeric" />
-                </div>
-                <div className="score-entry-field">
-                  <label className="score-entry-label">Stand Hrs</label>
-                  <input type="number" min="0" max="24" className="score-entry-input"
-                    value={inp.stand_hours}
-                    onChange={e => setField(m.player_id, 'stand_hours', e.target.value)}
-                    placeholder="0" inputMode="numeric" />
+                <div className="score-checkboxes" style={{ marginTop: '0.4rem' }}>
+                  <label className="score-checkbox-label">
+                    <input type="checkbox" checked={inp.exercise_hit || false}
+                      onChange={e => setField(m.player_id, 'exercise_hit', e.target.checked)} />
+                    <span>30+ min exercise</span>
+                  </label>
+                  <label className="score-checkbox-label">
+                    <input type="checkbox" checked={inp.stand_hit || false}
+                      onChange={e => setField(m.player_id, 'stand_hit', e.target.checked)} />
+                    <span>10+ stand hours</span>
+                  </label>
                 </div>
               </div>
             </div>

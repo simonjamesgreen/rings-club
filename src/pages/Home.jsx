@@ -29,7 +29,7 @@ export default function Home() {
     d.setDate(d.getDate() - 1)
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(d)
   })
-  const [inputs,       setInputs]       = useState({ move_calories: '', exercise_minutes: '', stand_hours: '' })
+  const [inputs,       setInputs]       = useState({ move_calories: '', exercise_hit: false, stand_hit: false })
   const [saving,       setSaving]       = useState(false)
   const [saveMsg,      setSaveMsg]      = useState(null)
   const [earnedShells, setEarnedShells] = useState([])
@@ -76,8 +76,8 @@ export default function Home() {
       .maybeSingle()
 
     setInputs(data
-      ? { move_calories: String(data.move_calories), exercise_minutes: String(data.exercise_minutes), stand_hours: String(data.stand_hours) }
-      : { move_calories: '', exercise_minutes: '', stand_hours: '' })
+      ? { move_calories: String(data.move_calories), exercise_hit: data.exercise_minutes >= 30, stand_hit: data.stand_hours >= 10 }
+      : { move_calories: '', exercise_hit: false, stand_hit: false })
     setSaveMsg(null)
     setEarnedShells([])
   }
@@ -143,8 +143,8 @@ export default function Home() {
     setEarnedShells([])
     try {
       const mc = parseInt(inputs.move_calories)    || 0
-      const em = parseInt(inputs.exercise_minutes) || 0
-      const sh = parseInt(inputs.stand_hours)      || 0
+      const em = inputs.exercise_hit ? 30 : 0
+      const sh = inputs.stand_hit ? 10 : 0
 
       if (mc === 0 && em === 0 && sh === 0) {
         setSaveMsg('error:Please enter at least one value before saving')
@@ -235,8 +235,8 @@ export default function Home() {
 
   // My Day computed
   const mc    = parseInt(inputs.move_calories)    || 0
-  const em    = parseInt(inputs.exercise_minutes) || 0
-  const sh    = parseInt(inputs.stand_hours)      || 0
+  const em    = inputs.exercise_hit ? 30 : 0
+  const sh    = inputs.stand_hit ? 10 : 0
   const score = me ? calculateScore(mc, me.move_goal, em, sh) : 0
   const isImmune    = hasImmunity(score)
   const isQualified = qualifiesForShell(score)
@@ -348,28 +348,24 @@ export default function Home() {
                   onChange={e => setDate(e.target.value)} />
               </div>
 
-              <div className="score-entry-vertical">
-                <div className="score-entry-field">
-                  <label className="score-entry-label">Move Cal</label>
-                  <input type="text" inputMode="numeric" pattern="[0-9]*" className="score-entry-input"
-                    value={inputs.move_calories}
-                    onChange={e => setInputs(p => ({ ...p, move_calories: e.target.value }))}
-                    placeholder="0" inputMode="numeric" />
-                </div>
-                <div className="score-entry-field">
-                  <label className="score-entry-label">Exercise Min</label>
-                  <input type="text" inputMode="numeric" pattern="[0-9]*" className="score-entry-input"
-                    value={inputs.exercise_minutes}
-                    onChange={e => setInputs(p => ({ ...p, exercise_minutes: e.target.value }))}
-                    placeholder="0" inputMode="numeric" />
-                </div>
-                <div className="score-entry-field">
-                  <label className="score-entry-label">Stand Hrs</label>
-                  <input type="text" inputMode="numeric" pattern="[0-9]*" className="score-entry-input"
-                    value={inputs.stand_hours}
-                    onChange={e => setInputs(p => ({ ...p, stand_hours: e.target.value }))}
-                    placeholder="0" inputMode="numeric" />
-                </div>
+              <div className="score-entry-field" style={{ marginBottom: '0.75rem' }}>
+                <label className="score-entry-label">Move Calories</label>
+                <input type="text" inputMode="numeric" pattern="[0-9]*" className="score-entry-input"
+                  value={inputs.move_calories}
+                  onChange={e => setInputs(p => ({ ...p, move_calories: e.target.value }))}
+                  placeholder="0" />
+              </div>
+              <div className="score-checkboxes">
+                <label className="score-checkbox-label">
+                  <input type="checkbox" checked={inputs.exercise_hit}
+                    onChange={e => setInputs(p => ({ ...p, exercise_hit: e.target.checked }))} />
+                  <span>30+ min exercise ✓</span>
+                </label>
+                <label className="score-checkbox-label">
+                  <input type="checkbox" checked={inputs.stand_hit}
+                    onChange={e => setInputs(p => ({ ...p, stand_hit: e.target.checked }))} />
+                  <span>10+ stand hours ✓</span>
+                </label>
               </div>
 
               {score > 0 && (

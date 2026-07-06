@@ -110,8 +110,11 @@ export async function resolveAndGetStandings(leagueId) {
     const effectiveRaw = { ...dayRaw }
 
     // ── Single timestamp-ordered queue ─────────────────────────────
+    // Include both pending (need decision) and already-applied (replay their
+    // stored outcome deterministically) events. Exclude 'returned' — they had
+    // no effect and don't need reprocessing.
     const dayEvents = (eventsByDate[date] || [])
-      .filter(e => e.status === 'pending')
+      .filter(e => e.status === 'pending' || e.status === 'applied')
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
 
     const impacted = new Set()   // one interaction per player per day
@@ -119,6 +122,38 @@ export async function resolveAndGetStandings(leagueId) {
 
     for (const ev of dayEvents) {
       const actor = ev.actor_player_id
+
+      // ── REPLAY: event was already resolved on a previous load ──────
+      // Re-apply its stored outcome deterministically so scores stay
+      // correct on every subsequent page load, without re-deciding
+      // whether it should have been returned (that decision is final).
+      if (ev.status === 'applied') {
+        if (ev.event_type === 'use_mushroom' || ev.event_type === 'use_cloud') {
+          if (actor in dayRaw && ev.final_score_applied != null) {
+            effectiveRaw[actor] = ev.final_score_applied
+            impacted.add(actor)
+          }
+        } else if (ev.event_type === 'fire_red_shell' || ev.event_type === 'fire_green_shell') {
+          const target = ev.target_player_id
+          if (target && target in dayRaw && ev.final_score_applied != null) {
+            effectiveRaw[target] = ev.final_score_applied
+            finalScores[date][target] = ev.final_score_applied
+            impacted.add(target)
+          }
+        } else if (ev.event_type === 'fire_blue_shell') {
+          blueSucceededToday = true
+          if (actor in dayRaw) {
+            impacted.add(actor)
+            if (ev.final_score_applied != null && ev.final_score_applied > 0) {
+              effectiveRaw[actor] = ev.final_score_applied
+              finalScores[date][actor] = ev.final_score_applied
+            }
+          }
+        }
+        continue  // skip the decision logic below — already resolved
+      }
+
+      // ── PENDING: run full decision logic (may become applied/returned) ──
 
       // ── Mushroom (self-targeted) ──────────────────────────────────
       if (ev.event_type === 'use_mushroom') {

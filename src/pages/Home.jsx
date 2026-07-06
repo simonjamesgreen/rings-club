@@ -6,6 +6,7 @@ import { calculateScore, qualifiesForShell, hasImmunity } from '../lib/scoring'
 import { useAuth } from '../lib/auth'
 import PlayerCard from '../components/PlayerCard'
 import TeamCard from '../components/TeamCard'
+import DailyLeaderboard from '../components/DailyLeaderboard'
 import ActivityFeed from '../components/ActivityFeed'
 import ScoreLog from '../components/ScoreLog'
 
@@ -20,6 +21,7 @@ export default function Home() {
   const [error,        setError]        = useState(null)
 
   const [teamStandings, setTeamStandings] = useState([])
+  const [dailyBreakdown, setDailyBreakdown] = useState({})
   const [activeTab,     setActiveTab]     = useState('individual') // 'individual' | 'teams'
 
   // My Day
@@ -47,10 +49,11 @@ export default function Home() {
         .from('leagues').select('*').eq('status', 'active').single()
       if (le) throw le
 
-      const { league: lg, standings: st, teamStandings: ts } = await resolveAndGetStandings(l.id)
+      const { league: lg, standings: st, teamStandings: ts, dailyBreakdown: db } = await resolveAndGetStandings(l.id)
       setLeague(lg)
       setStandings(st)
       setTeamStandings(ts || [])
+      setDailyBreakdown(db || {})
 
       if (user) {
         const myRow = st.find(s => s.player?.email === user.email)
@@ -83,9 +86,10 @@ export default function Home() {
   }
 
   async function refreshAll() {
-    const { standings: st, teamStandings: ts } = await resolveAndGetStandings(league.id)
+    const { standings: st, teamStandings: ts, dailyBreakdown: db } = await resolveAndGetStandings(league.id)
     setStandings(st)
     setTeamStandings(ts || [])
+    setDailyBreakdown(db || {})
     if (user) {
       const myRow = st.find(s => s.player?.email === user.email)
       setMe(myRow || null)
@@ -275,6 +279,12 @@ export default function Home() {
           >
             Teams
           </button>
+          <button
+            className={`tab-btn ${activeTab === 'daily' ? 'active' : ''}`}
+            onClick={() => setActiveTab('daily')}
+          >
+            Daily
+          </button>
         </div>
 
         {activeTab === 'individual' ? (
@@ -301,7 +311,7 @@ export default function Home() {
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === 'teams' ? (
           <div className="standings-list">
             {teamStandings.map((team, i) => (
               <TeamCard key={team.id} rank={i + 1} team={team} />
@@ -314,6 +324,8 @@ export default function Home() {
               </div>
             )}
           </div>
+        ) : (
+          <DailyLeaderboard dailyBreakdown={dailyBreakdown} league={league} />
         )}
         <ActivityFeed leagueId={league.id} standings={standings} />
       </section>

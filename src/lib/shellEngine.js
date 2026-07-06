@@ -306,7 +306,22 @@ export async function resolveAndGetStandings(leagueId) {
   })
   teamStandings.sort((a, b) => b.totalScore - a.totalScore)
 
-  return { league, standings, teamStandings, refunded: Object.keys(refunds).length > 0 }
+  // Build daily breakdown for the daily leaderboard tab
+  const dailyBreakdown = {}
+  for (const date of allDates) {
+    dailyBreakdown[date] = members
+      .filter(m => finalScores[date]?.[m.player_id] !== undefined)
+      .map(m => ({
+        player_id:  m.player_id,
+        player:     m.player,
+        rawScore:   Math.round(rawScores[date]?.[m.player_id] ?? 0),
+        finalScore: Math.round(finalScores[date][m.player_id]),
+        points:     dailyPointsByDate[date]?.[m.player_id] ?? 0,
+      }))
+      .sort((a, b) => b.finalScore - a.finalScore)
+  }
+
+  return { league, standings, teamStandings, dailyBreakdown, refunded: Object.keys(refunds).length > 0 }
 }
 
 /** Fire a shell — decrements inventory immediately, logs with timestamp. */

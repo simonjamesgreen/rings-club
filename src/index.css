@@ -1203,3 +1203,75 @@ body::before {
   cursor: pointer;
   flex-shrink: 0;
 }
+
+/* ─── DAILY LEADERBOARD ───────────────────── */
+.daily-date-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.daily-latest-btn {
+  background: var(--gold);
+  color: #07071a;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  min-height: 36px;
+  transition: opacity 0.15s;
+}
+.daily-latest-btn:hover { opacity: 0.88; }
+
+.daily-date-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.daily-card {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 0.75rem 0.875rem;
+  padding: 0.875rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--player-color, var(--border));
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.daily-rank {
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.daily-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.daily-shell-note {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.daily-score-block {
+  text-align: right;
+}
+
+.daily-points {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin-top: 0.15rem;
+}

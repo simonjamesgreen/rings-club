@@ -185,6 +185,7 @@ export async function resolveAndGetStandings(leagueId) {
       else if (ev.event_type === 'fire_red_shell') {
         if (!leaderPid || !(leaderPid in dayRaw)) continue  // can't resolve yet
         if (leaderRaw <= 0) continue  // no valid positive-scoring leader
+        if (playerIdsToday.length < members.length) continue  // wait for everyone to submit before locking in the daily leader
         const shouldReturn = leaderPid === actor            // can't hit yourself
           || immune.has(leaderPid)
           || impacted.has(leaderPid)
@@ -227,6 +228,7 @@ export async function resolveAndGetStandings(leagueId) {
           continue
         }
         if (!(actor in dayRaw)) continue  // actor hasn't submitted scores yet
+        if (playerIdsToday.length < members.length) continue  // wait for everyone to submit before locking in the daily leader
 
         if (impacted.has(actor)) {
           // Already used their daily interaction

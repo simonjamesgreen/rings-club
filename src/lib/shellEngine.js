@@ -300,21 +300,25 @@ export async function resolveAndGetStandings(leagueId) {
   // ── Individual standings ──────────────────────────────────────────
   const standings = members.map(m => {
     let totalPoints = 0
-    let scoreSum = 0
+    let rawScoreSum = 0
     let daysScored = 0
     for (const date of allDates) {
       totalPoints += dailyPointsByDate[date]?.[m.player_id] || 0
-      if (finalScores[date]?.[m.player_id] != null) {
-        scoreSum += finalScores[date][m.player_id]
+      // Use RAW score (unaffected by shells) for the average — this reflects
+      // genuine performance, not the outcome of that day's power-up tactics.
+      if (rawScores[date]?.[m.player_id] != null) {
+        rawScoreSum += rawScores[date][m.player_id]
         daysScored++
       }
     }
     return {
       ...m,
       totalScore:  totalPoints,
-      avgScore:    daysScored > 0 ? Math.round(scoreSum / daysScored) : null,
+      avgScore:    daysScored > 0 ? Math.round(rawScoreSum / daysScored) : null,
       todayScore:  finalScores[today]?.[m.player_id] != null
         ? Math.round(finalScores[today][m.player_id]) : null,
+      todayRawScore: rawScores[today]?.[m.player_id] != null
+        ? Math.round(rawScores[today][m.player_id]) : null,
       todayPoints: dailyPointsByDate[today]?.[m.player_id] ?? null,
       todayImmune: (rawScores[today]?.[m.player_id] || 0) >= 300,
     }

@@ -18,6 +18,9 @@ export default function Navbar() {
     <nav className="navbar">
       <Link to="/" className="navbar-logo">🏁 Rings Club</Link>
       <div className="navbar-actions">
+        <Link to="/archive" className={`nav-link ${isActive('/archive') ? 'nav-link-active' : ''}`}>
+          Archive
+        </Link>
         <Link to="/rules" className={`nav-link ${isActive('/rules') ? 'nav-link-active' : ''}`}>
           Rules
         </Link>

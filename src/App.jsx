@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Rules from './pages/Rules'
+import Archive from './pages/Archive'
 import SuperAdmin from './pages/SuperAdmin'
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/"           element={<Home />} />
         <Route path="/login"      element={<Login />} />
         <Route path="/rules"      element={<Rules />} />
+        <Route path="/archive"    element={<Archive />} />
         <Route path="/superadmin" element={<SuperAdmin />} />
         <Route path="/admin"      element={<Navigate to="/" replace />} />
       </Routes>

@@ -59,7 +59,19 @@ export default function DailyLeaderboard({ dailyBreakdown, league }) {
               <span className="player-name" style={{ color: row.player.avatar_color }}>
                 {row.player.display_name}
               </span>
-              {row.rawScore !== row.finalScore && (
+              {row.lateStatus === 'late_forgiven' && (
+                <span className="late-tag late-forgiven">🕐 Late (pass used)</span>
+              )}
+              {row.lateStatus === 'late_penalized' && (
+                <span className="late-tag late-penalized">🕐 Late → 0</span>
+              )}
+              {row.lateStatus === 'missed_forgiven' && (
+                <span className="late-tag late-forgiven">❌ Missed (pass used)</span>
+              )}
+              {row.lateStatus === 'missed_penalized' && (
+                <span className="late-tag late-penalized">❌ Missed → 0</span>
+              )}
+              {row.rawScore !== row.finalScore && row.lateStatus !== 'late_penalized' && row.lateStatus !== 'missed_penalized' && (
                 <span className="daily-shell-note">
                   raw {row.rawScore}% → {row.finalScore}% after shells
                 </span>

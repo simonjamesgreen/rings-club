@@ -352,6 +352,12 @@ export default function Home() {
               <span className="myday-goal">Goal: {me.move_goal} cal</span>
             </div>
 
+            <div className={`late-pass-banner ${me.latePassUsed ? 'used' : 'available'}`}>
+              {me.latePassUsed
+                ? '⚠️ Your late pass is used — any late or missed submission from now scores 0'
+                : '✓ Late pass available — one late/missed day this season is forgiven'}
+            </div>
+
             {/* Score entry */}
             <div className="admin-card">
               <div className="date-row">

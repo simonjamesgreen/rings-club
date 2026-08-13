@@ -1275,3 +1275,44 @@ body::before {
   color: var(--gold);
   margin-top: 0.15rem;
 }
+
+/* ─── LATE SUBMISSION ─────────────────────── */
+.late-pass-banner {
+  padding: 0.6rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.late-pass-banner.available {
+  background: rgba(67,214,146,0.1);
+  border: 1px solid rgba(67,214,146,0.35);
+  color: var(--green);
+}
+.late-pass-banner.used {
+  background: rgba(255,68,68,0.1);
+  border: 1px solid rgba(255,68,68,0.35);
+  color: #ff7777;
+}
+
+.late-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 0.15rem;
+  width: fit-content;
+}
+.late-tag.late-forgiven {
+  background: rgba(255,173,71,0.15);
+  color: #ffad47;
+  border: 1px solid #ffad47;
+}
+.late-tag.late-penalized {
+  background: rgba(255,68,68,0.15);
+  color: #ff7777;
+  border: 1px solid var(--red);
+}

@@ -273,6 +273,32 @@ export default function Rules() {
         </div>
       </section>
 
+      {/* LATE SUBMISSIONS */}
+      <section className="rules-section">
+        <h2 className="rules-section-title">⏰ Submission Deadline</h2>
+        <p className="rules-text">
+          Scores must be submitted by <strong>10:00am BST the following day</strong>.
+          e.g. exercise done on Monday must be submitted by 10:00am Tuesday.
+        </p>
+        <div className="rules-table" style={{ marginTop: '1rem' }}>
+          <div className="rules-row">
+            <span className="rules-row-label">Free pass</span>
+            <span className="rules-row-value">One late (or missed) submission is forgiven — for the entire season, not per week</span>
+          </div>
+          <div className="rules-row">
+            <span className="rules-row-label">After that</span>
+            <span className="rules-row-value">Any further late or missed submission scores a hard 0 for that day, no exceptions</span>
+          </div>
+          <div className="rules-row">
+            <span className="rules-row-label">Missed entirely</span>
+            <span className="rules-row-value">Treated exactly the same as a late submission</span>
+          </div>
+        </div>
+        <div className="rules-note" style={{ marginTop: '0.75rem' }}>
+          Your late pass status is shown on your My Day page — check it before you cut it close.
+        </div>
+      </section>
+
       {/* TEAMS */}
       <section className="rules-section">
         <h2 className="rules-section-title">Team Scoring</h2>

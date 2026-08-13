@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { calculateScore } from './scoring'
+import { computeLateStatus } from './lateness'
 
 /**
  * RINGS CLUB SHELL ENGINE v3
@@ -62,6 +63,32 @@ export async function resolveAndGetStandings(leagueId) {
     scoreDetails[s.date] = scoreDetails[s.date] || {}
     scoreDetails[s.date][s.player_id] = { exercise_minutes: s.exercise_minutes, stand_hours: s.stand_hours }
   })
+
+  // ── Late submission penalty ─────────────────────────────────────
+  // One free pass per player for the whole season. After that, any
+  // late submission (or missed day entirely) scores a hard 0.
+  const scoresByDatePlayer = {}
+  rangedScores.forEach(s => {
+    scoresByDatePlayer[s.date] = scoresByDatePlayer[s.date] || {}
+    scoresByDatePlayer[s.date][s.player_id] = s
+  })
+  const memberPlayerIds = members.map(m => m.player_id)
+  const { lateStatus, passUsed } = computeLateStatus(league, memberPlayerIds, scoresByDatePlayer)
+
+  for (const [date, byPlayer] of Object.entries(lateStatus)) {
+    for (const [pid, status] of Object.entries(byPlayer)) {
+      if (status === 'late_penalized' || status === 'missed_penalized' || status === 'missed_forgiven') {
+        // Zero the score. For missed days there's no underlying row, so
+        // we inject a zero directly into rawScores/rawMovePct so the
+        // player still appears in that day's results (at 0%, no points).
+        rawScores[date]  = rawScores[date]  || {}
+        rawMovePct[date] = rawMovePct[date] || {}
+        rawScores[date][pid]  = 0
+        rawMovePct[date][pid] = 0
+      }
+      // 'ontime' and 'late_forgiven' — score stands as calculated, no change.
+    }
+  }
 
   const allDates = Object.keys(rawScores).sort()
 
@@ -321,6 +348,7 @@ export async function resolveAndGetStandings(leagueId) {
         ? Math.round(rawScores[today][m.player_id]) : null,
       todayPoints: dailyPointsByDate[today]?.[m.player_id] ?? null,
       todayImmune: (rawScores[today]?.[m.player_id] || 0) >= 300,
+      latePassUsed: !!passUsed[m.player_id],
     }
   })
   standings.sort((a, b) => b.totalScore - a.totalScore)
@@ -358,6 +386,7 @@ export async function resolveAndGetStandings(leagueId) {
         rawScore:   Math.round(rawScores[date]?.[m.player_id] ?? 0),
         finalScore: Math.round(finalScores[date][m.player_id]),
         points:     dailyPointsByDate[date]?.[m.player_id] ?? 0,
+        lateStatus: lateStatus[date]?.[m.player_id] ?? 'ontime',
       }))
       .sort((a, b) => b.finalScore - a.finalScore)
   }

@@ -203,15 +203,19 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Target</span>
-              <span>Yourself</span>
+              <span>Yourself — but always applies to <strong>yesterday's</strong> exercise day, not the day you fire it</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Effect</span>
               <span>Your day-off card. Overrides the exercise/stand zero condition — your score is at least 100% regardless. If your actual move % is higher, you get the higher number.</span>
             </div>
             <div className="powerup-detail">
+              <span className="powerup-detail-label">Timing</span>
+              <span>Unlike other power-ups, Cloud doesn't wait until tomorrow — it reacts to the day just gone. If yesterday's score is already in, it resolves straight away.</span>
+            </div>
+            <div className="powerup-detail">
               <span className="powerup-detail-label">Protection</span>
-              <span>If you fire your Cloud <em>before</em> someone fires a shell at you (by timestamp), their shell bounces back to them</span>
+              <span>If you fire your Cloud <em>before</em> someone fires a shell at you for that same day (by timestamp), their shell bounces back to them</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Supply</span>

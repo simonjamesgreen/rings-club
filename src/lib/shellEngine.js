@@ -412,17 +412,11 @@ export async function fireShell(leagueId, memberId, actorPlayerId, shellType, ta
   const col = colMap[shellType]
   if (!member[col] || member[col] < 1) throw new Error(`No ${shellType}s left to fire`)
 
-  // BST-aware "today". Shells/mushroom target the day they're fired on
-  // (resolves next day when that day's score is entered). Clouds are the
-  // exception — fired in reaction to the day just gone, so they target
-  // YESTERDAY's exercise day instead.
+  // BST-aware "today". All power-ups (including clouds) target the day
+  // they're fired on, and resolve the next day once that day's score
+  // is entered — same timing for everyone.
   const todayBST = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date())
-  let targetDate = todayBST
-  if (shellType === 'cloud') {
-    const d = new Date()
-    d.setDate(d.getDate() - 1)
-    targetDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(d)
-  }
+  const targetDate = todayBST
 
   const { error: ue } = await supabase
     .from('league_members').update({ [col]: member[col] - 1 }).eq('id', memberId)

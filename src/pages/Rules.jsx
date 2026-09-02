@@ -203,7 +203,7 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Target</span>
-              <span>Yourself — but always applies to <strong>yesterday's</strong> exercise day, not the day you fire it</span>
+              <span>Yourself — applies to the day you fire it, same as other power-ups</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Effect</span>
@@ -211,7 +211,7 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Timing</span>
-              <span>Unlike other power-ups, Cloud doesn't wait until tomorrow — it reacts to the day just gone. If yesterday's score is already in, it resolves straight away.</span>
+              <span>Fire it today, it applies to today's score, and lands tomorrow once today's score is entered — same as red, green, blue and mushroom.</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Protection</span>

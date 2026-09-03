@@ -18,7 +18,7 @@ import { computeLateStatus } from './lateness'
  *   immune          = players whose raw score >= 300% (immune to incoming shells)
  *
  * Queue rules (timestamp order):
- *   use_mushroom   → self: if already impacted → return; else → raw * 1.5, impacted
+ *   use_mushroom   → self: if already impacted → return; else → raw * 1.25, impacted
  *   use_cloud      → self: if already impacted → return; else → MAX(100, movePct), impacted
  *   fire_red_shell → target = leaderPid (by raw score): if immune/impacted/self → return; else → ×0.75 (25% off)
  *   fire_green_shell → target = manual: if immune/impacted → return; else → ×0.75 (25% off)
@@ -189,7 +189,7 @@ export async function resolveAndGetStandings(leagueId) {
           queueRefund(actor, 'mushrooms')
           dbUpdates.push({ id: ev.id, status: 'returned', target_player_id: actor, final_score_applied: null })
         } else {
-          effectiveRaw[actor] = dayRaw[actor] * 1.5
+          effectiveRaw[actor] = dayRaw[actor] * 1.25
           impacted.add(actor)
           dbUpdates.push({ id: ev.id, status: 'applied', target_player_id: actor, final_score_applied: effectiveRaw[actor] })
         }

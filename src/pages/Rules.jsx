@@ -94,7 +94,7 @@ export default function Rules() {
           then the cycle resets and starts again in a new random order.
         </p>
         <div className="rules-note" style={{ marginTop: '0.75rem' }}>
-          ☁️ Clouds are different — everyone starts with 2 and they cannot be earned. Once used, they're gone.
+          ☁️ Clouds are different — everyone starts with 4 and they cannot be earned. Once used, they're gone.
         </div>
       </section>
 
@@ -187,7 +187,7 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Effect</span>
-              <span>Your score × 1.5 for that day</span>
+              <span>Your score × 1.25 for that day</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Use any day</span>
@@ -199,7 +199,7 @@ export default function Rules() {
             <div className="powerup-card-header">
               <span className="powerup-icon">☁️</span>
               <span className="powerup-name">Cloud</span>
-              <span className="powerup-badge">Everyone starts with 2</span>
+              <span className="powerup-badge">Everyone starts with 4</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Target</span>
@@ -219,7 +219,7 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Supply</span>
-              <span>Cannot be earned — 2 per player for the whole season. Use them wisely.</span>
+              <span>Cannot be earned — 4 per player for the whole season. Use them wisely.</span>
             </div>
           </div>
 

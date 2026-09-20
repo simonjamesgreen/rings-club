@@ -155,9 +155,17 @@ export async function resolveAndGetStandings(leagueId) {
       // correct on every subsequent page load, without re-deciding
       // whether it should have been returned (that decision is final).
       if (ev.status === 'applied') {
-        if (ev.event_type === 'use_mushroom' || ev.event_type === 'use_cloud') {
-          if (actor in dayRaw && ev.final_score_applied != null) {
-            effectiveRaw[actor] = ev.final_score_applied
+        if (ev.event_type === 'use_mushroom') {
+          // Self-targeted — always recompute live from the CURRENT raw score,
+          // so a later correction to that day's entry flows through correctly
+          // instead of replaying a stale frozen value.
+          if (actor in dayRaw) {
+            effectiveRaw[actor] = dayRaw[actor] * 1.25
+            impacted.add(actor)
+          }
+        } else if (ev.event_type === 'use_cloud') {
+          if (actor in dayRaw) {
+            effectiveRaw[actor] = Math.max(100, dayMovePct[actor] || 0)
             impacted.add(actor)
           }
         } else if (ev.event_type === 'fire_red_shell' || ev.event_type === 'fire_green_shell') {

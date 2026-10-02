@@ -24,6 +24,9 @@ import { computeLateStatus } from './lateness'
  *   fire_green_shell → target = manual: if immune/impacted → return; else → ×0.75 (25% off)
  *   fire_blue_shell → self-boost: firer gets day top raw score (if they meet exercise/stand/move≥100%)
  *       only one blue per day; first timestamp wins, others returned
+ *       also marks the referenced LEADER as impacted — once a blue shell has
+ *       fired, the leader's score is locked for the rest of the day: any later
+ *       self-boost by the leader or incoming shell aimed at them is returned
  */
 
 export async function resolveAndGetStandings(leagueId) {
@@ -179,6 +182,9 @@ export async function resolveAndGetStandings(leagueId) {
           blueSucceededToday = true
           if (actor in dayRaw) {
             impacted.add(actor)
+            // The leader whose score was referenced is locked for the rest
+            // of the day — no later self-boost or incoming shell can touch them.
+            if (leaderPid) impacted.add(leaderPid)
             if (ev.final_score_applied != null && ev.final_score_applied > 0) {
               effectiveRaw[actor] = ev.final_score_applied
               finalScores[date][actor] = ev.final_score_applied
@@ -274,6 +280,10 @@ export async function resolveAndGetStandings(leagueId) {
 
         blueSucceededToday = true
         impacted.add(actor)
+        // The leader whose score is being referenced is locked for the rest
+        // of the day — no later self-boost or incoming shell can touch them,
+        // even if the firer themselves doesn't end up meeting their own reqs.
+        if (leaderPid) impacted.add(leaderPid)
 
         // Check firer meets their own exercise/stand/move requirements
         const details = scoreDetails[date]?.[actor]

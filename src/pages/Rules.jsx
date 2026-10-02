@@ -164,7 +164,7 @@ export default function Rules() {
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">Condition</span>
-              <span>You must still hit your own exercise (30+ min) AND stand (10+ hrs) targets. If you don't, you get 0 and the shell is consumed.</span>
+              <span>You must still hit your own Move (100%+), exercise (30+ min) AND stand (10+ hrs) targets. If you don't, you get 0 and the shell is consumed.</span>
             </div>
             <div className="powerup-detail">
               <span className="powerup-detail-label">One per day</span>

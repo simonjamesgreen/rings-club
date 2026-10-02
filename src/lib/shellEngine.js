@@ -22,7 +22,7 @@ import { computeLateStatus } from './lateness'
  *   use_cloud      → self: if already impacted → return; else → MAX(100, movePct), impacted
  *   fire_red_shell → target = leaderPid (by raw score): if immune/impacted/self → return; else → ×0.75 (25% off)
  *   fire_green_shell → target = manual: if immune/impacted → return; else → ×0.75 (25% off)
- *   fire_blue_shell → self-boost: firer gets day top raw score (if they meet exercise/stand)
+ *   fire_blue_shell → self-boost: firer gets day top raw score (if they meet exercise/stand/move≥100%)
  *       only one blue per day; first timestamp wins, others returned
  */
 
@@ -254,7 +254,7 @@ export async function resolveAndGetStandings(leagueId) {
       // ── Blue Shell (self-boost: copy the day's top score) ──────────
       // The FIRER gets the highest raw score of the day as their own.
       // The top scorer is completely unaffected.
-      // Firer still needs to meet their own exercise/stand requirements.
+      // Firer still needs to meet their own exercise/stand/move (≥100%) requirements.
       // Only one blue shell benefits per day — first timestamp wins.
       else if (ev.event_type === 'fire_blue_shell') {
         if (blueSucceededToday) {
@@ -275,9 +275,9 @@ export async function resolveAndGetStandings(leagueId) {
         blueSucceededToday = true
         impacted.add(actor)
 
-        // Check firer meets their own exercise/stand requirements
+        // Check firer meets their own exercise/stand/move requirements
         const details = scoreDetails[date]?.[actor]
-        const meetsReqs = details && details.exercise_minutes >= 30 && details.stand_hours >= 10
+        const meetsReqs = details && details.exercise_minutes >= 30 && details.stand_hours >= 10 && (dayMovePct[actor] || 0) >= 100
 
         if (meetsReqs && leaderPid) {
           // Give firer the day's top raw score (top scorer unaffected)

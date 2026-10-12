@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { resolveAndGetStandings, fireShell } from '../lib/shellEngine'
-import { calculateScore, qualifiesForShell, hasImmunity } from '../lib/scoring'
+import { calculateScore, goalFor, qualifiesForShell, hasImmunity } from '../lib/scoring'
 import { useAuth } from '../lib/auth'
 import PlayerCard from '../components/PlayerCard'
 import TeamCard from '../components/TeamCard'
@@ -165,7 +165,7 @@ export default function Home() {
 
       // Score saved — now award shells and refresh (errors here don't undo the save)
       try {
-        const score = calculateScore(mc, me.move_goal, em, sh)
+        const score = calculateScore(mc, goalFor(me, date), em, sh)
         const earned = await awardShellsIfEarned(score)
         setEarnedShells(earned)
       } catch (shellErr) {
@@ -241,7 +241,7 @@ export default function Home() {
   const mc    = parseInt(inputs.move_calories)    || 0
   const em    = inputs.exercise_hit ? 30 : 0
   const sh    = inputs.stand_hit ? 10 : 0
-  const score = me ? calculateScore(mc, me.move_goal, em, sh) : 0
+  const score = me ? calculateScore(mc, goalFor(me, date), em, sh) : 0
   const isImmune    = hasImmunity(score)
   const isQualified = qualifiesForShell(score)
   const others      = me ? standings.filter(s => s.player_id !== me.player_id) : []
@@ -349,7 +349,7 @@ export default function Home() {
               <h2 className="myday-title" style={{ color: me.player.avatar_color }}>
                 {me.player.display_name}'s Day
               </h2>
-              <span className="myday-goal">Goal: {me.move_goal} cal</span>
+              <span className="myday-goal">Goal: {goalFor(me, date)} cal</span>
             </div>
 
             <div className={`late-pass-banner ${me.latePassUsed ? 'used' : 'available'}`}>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { calculateScore, qualifiesForShell, qualifiesForMushroom, hasImmunity } from '../lib/scoring'
+import { calculateScore, goalFor, qualifiesForShell, qualifiesForMushroom, hasImmunity } from '../lib/scoring'
 import { resolveAndGetStandings, fireShell } from '../lib/shellEngine'
 import ActivityFeed from '../components/ActivityFeed'
 
@@ -134,7 +134,7 @@ export default function Admin() {
       }, { onConflict: 'league_id,player_id,date' })
       if (ue) throw ue
 
-      const score = calculateScore(mc, me.move_goal, em, sh)
+      const score = calculateScore(mc, goalFor(me, date), em, sh)
       const earned = await awardShellsIfEarned(score, em)
 
       setSaveMsg('success')
@@ -173,7 +173,7 @@ export default function Admin() {
   const mc    = parseInt(inputs.move_calories)    || 0
   const em    = parseInt(inputs.exercise_minutes) || 0
   const sh    = parseInt(inputs.stand_hours)      || 0
-  const score = calculateScore(mc, me.move_goal, em, sh)
+  const score = calculateScore(mc, goalFor(me, date), em, sh)
   const isImmune    = hasImmunity(score)
   const isQualified = qualifiesForShell(score)
   const earnsShroom = qualifiesForMushroom(em)
@@ -198,7 +198,7 @@ export default function Admin() {
 
       {/* SCORE ENTRY */}
       <div className="admin-card">
-        <p className="admin-card-title">Enter Your Score · <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>Goal: {me.move_goal} cal</span></p>
+        <p className="admin-card-title">Enter Your Score · <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>Goal: {goalFor(me, date)} cal</span></p>
 
         <div className="date-row">
           <label htmlFor="score-date">Date</label>

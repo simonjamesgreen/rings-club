@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { calculateScore } from './scoring'
+import { calculateScore, goalFor } from './scoring'
 import { computeLateStatus } from './lateness'
 
 /**
@@ -53,7 +53,7 @@ export async function resolveAndGetStandings(leagueId) {
   const rawScores  = {}   // [date][pid] = score with zeroing (exercise/stand)
   const rawMovePct = {}   // [date][pid] = (move_cal / move_goal) * 100, no zeroing
   rangedScores.forEach(s => {
-    const moveGoal = memberByPlayer[s.player_id]?.move_goal || 500
+    const moveGoal = goalFor(memberByPlayer[s.player_id], s.date)
     rawScores[s.date]  = rawScores[s.date]  || {}
     rawMovePct[s.date] = rawMovePct[s.date] || {}
     rawScores[s.date][s.player_id]  = calculateScore(s.move_calories, moveGoal, s.exercise_minutes, s.stand_hours)

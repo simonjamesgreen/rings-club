@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { calculateScore } from '../lib/scoring'
+import { calculateScore, goalFor } from '../lib/scoring'
 
 function formatBST(iso) {
   const d = new Date(iso)
@@ -34,7 +34,7 @@ export default function ScoreLog({ leagueId, standings }) {
     setEntries((data || []).filter(e => e.player))  // guard against null joins
   }
 
-  const goalOf = pid => standings.find(s => s.player_id === pid)?.move_goal || 500
+  const goalOf = (pid, date) => goalFor(standings.find(s => s.player_id === pid), date)
 
   if (!entries.length) return null
 
@@ -42,7 +42,7 @@ export default function ScoreLog({ leagueId, standings }) {
     <div className="score-log">
       <p className="admin-card-title">Score Log</p>
       {entries.map(e => {
-        const score   = calculateScore(e.move_calories, goalOf(e.player_id), e.exercise_minutes, e.stand_hours)
+        const score   = calculateScore(e.move_calories, goalOf(e.player_id, e.date), e.exercise_minutes, e.stand_hours)
         const exDate  = new Date(e.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
         const qualifies = score >= 125
 

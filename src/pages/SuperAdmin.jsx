@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { calculateScore } from '../lib/scoring'
+import { calculateScore, goalFor } from '../lib/scoring'
 import { resolveAndGetStandings } from '../lib/shellEngine'
 
 const SIMON = 'simonjamesgreen@gmail.com'
@@ -187,7 +187,7 @@ export default function SuperAdmin() {
           const inp = inputs[m.player_id] || {}
           const score = calculateScore(
             parseInt(inp.move_calories)    || 0,
-            m.move_goal,
+            goalFor(m, date),
             inp.exercise_hit ? 30 : 0,
             inp.stand_hit ? 10 : 0,
           )
@@ -197,7 +197,7 @@ export default function SuperAdmin() {
                 <span className="score-player" style={{ color: m.player.avatar_color }}>
                   {m.player.display_name}
                   <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.75rem', marginLeft: '0.5rem' }}>
-                    goal: {m.move_goal} cal
+                    goal: {goalFor(m, date)} cal
                   </span>
                 </span>
                 <span className={`score-preview ${score >= 300 ? 'immune' : score >= 125 ? 'qualifying' : ''}`}>

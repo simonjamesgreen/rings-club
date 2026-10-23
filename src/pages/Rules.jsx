@@ -175,8 +175,8 @@ export default function Rules() {
               <span>Firing a blue shell uses your one daily powerup interaction slot</span>
             </div>
             <div className="powerup-detail">
-              <span className="powerup-detail-label">Locks the leader</span>
-              <span>Once a blue shell has fired, the day's leader is locked — if the leader plays a mushroom on themselves, or gets hit by a red shell, after that point, it has no effect. (If those happen before the blue shell fires, they still count as normal.)</span>
+              <span className="powerup-detail-label">The leader</span>
+              <span>Not affected by your blue shell. The day's leader can still play a mushroom or be hit by a shell afterwards, as normal.</span>
             </div>
           </div>
 

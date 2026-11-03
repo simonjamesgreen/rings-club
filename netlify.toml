@@ -3,6 +3,11 @@
   publish = "dist"
 
 [[redirects]]
+  from = "/grudge/join/*"
+  to = "/grudge/join.html"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

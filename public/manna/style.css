@@ -1,0 +1,21 @@
+:root{--ink:#172231;--mist:#EEF2F3;--paper:#FBFCFC;--slate:#4E5A68;--line:#D6DEE2;--gold:#B07F1F;--goldText:#8A6212}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 Manrope,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:28px max(20px,env(safe-area-inset-left)) 48px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.brand{font-family:Literata,Georgia,serif;font-style:italic;font-weight:500;font-size:26px;color:var(--ink);text-decoration:none}
+.brand span{color:var(--gold)}
+nav{display:flex;gap:18px}
+nav a,a{color:var(--ink)}
+nav a{font-weight:600;font-size:14px;text-decoration:none}
+h1{font-family:Literata,Georgia,serif;font-weight:600;font-size:34px;line-height:1.2;margin:0 0 10px}
+h2{font-family:Literata,Georgia,serif;font-weight:600;font-size:22px;margin:32px 0 8px}
+.lede{font-size:18px;color:#39465A}
+.small{font-size:13px;color:var(--slate)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin:12px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid var(--line)}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
+.verse{font-family:Literata,Georgia,serif;font-size:20px;line-height:1.5}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--slate)}
+footer a{color:var(--slate)}

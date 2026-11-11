@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Would you pray with me? · Manna</title>
+<meta name="description" content="A prayer request shared from Manna: Daily Bread. Tap I prayed to let them know.">
+<meta property="og:title" content="Would you pray with me?">
+<meta property="og:description" content="A prayer request shared from Manna: Daily Bread. Tap to read it and let them know you prayed.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#172231">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400;1,7..72,500&family=Manrope:wght@400;600;700&display=swap">
+<style>
+:root{--ink:#172231;--line2:#2C3A4D;--on:#F2F4F5;--muted:#C9D2DA;--gold:#E2B85A;--green:#A8DCC3}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--ink);color:var(--on);font:16px/1.6 Manrope,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:520px;margin:0 auto;padding:32px 22px 40px;min-height:100vh;display:flex;flex-direction:column;gap:22px}
+.brand{font-family:Literata,Georgia,serif;font-style:italic;font-weight:500;font-size:24px;color:var(--on);text-decoration:none}
+.brand span{color:var(--gold)}
+.dots{display:flex;gap:6px;align-items:center}.dots i{display:block;border-radius:50%;background:var(--gold)}
+.eyebrow{font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+h1{font-family:Literata,Georgia,serif;font-weight:600;font-size:32px;line-height:1.2;margin:0}
+.detail{font-family:Literata,Georgia,serif;font-size:19px;line-height:1.55;color:var(--on);opacity:.92;margin:0}
+.from{font-weight:700;font-size:12px;letter-spacing:.12em;color:var(--muted)}
+.answered{border-left:3px solid var(--green);padding:6px 0 6px 14px}
+.answered b{display:block;color:var(--green);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.answered p{font-family:Literata,Georgia,serif;font-size:18px;margin:4px 0 0}
+button{appearance:none;border:0;border-radius:16px;min-height:56px;font:700 17px Manrope,Arial,sans-serif;background:var(--gold);color:var(--ink);cursor:pointer}
+button[disabled]{background:var(--line2);color:var(--muted);cursor:default}
+.count{text-align:center;color:var(--muted);font-size:15px;margin:-8px 0 0}
+.verse{border-top:1px solid var(--line2);padding-top:18px;font-family:Literata,Georgia,serif;font-style:italic;font-size:16px;color:var(--muted)}
+.verse span{display:block;font-style:normal;font-family:Manrope,Arial,sans-serif;font-weight:700;font-size:12px;color:var(--gold);margin-top:6px}
+.get{margin-top:auto;border-top:1px solid var(--line2);padding-top:18px;font-size:14px;color:var(--muted)}
+.get a{color:var(--gold);font-weight:700}
+.hidden{display:none}
+.code{font:700 34px Manrope,Arial,sans-serif;letter-spacing:.18em;color:var(--gold);text-align:center;background:var(--line2);border-radius:14px;padding:14px}
+.steps{color:var(--muted);font-size:15px;margin:0;padding-left:20px}.steps li{margin:6px 0}
+a.btn{display:block;text-align:center;text-decoration:none;border-radius:16px;min-height:56px;line-height:56px;font:700 17px Manrope,Arial,sans-serif;background:var(--gold);color:var(--ink)}
+a.btn2{background:transparent;border:1px solid var(--line2);color:var(--on)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="brand" href="/manna/">Manna<span>:</span> Daily Bread</a>
+  <div id="loading" class="count">Opening the invitation…</div>
+  <section id="inv" class="hidden" style="display:flex;flex-direction:column;gap:16px">
+    <div class="dots"><i style="width:7px;height:7px"></i><i style="width:5px;height:5px;opacity:.75"></i><i style="width:4px;height:4px;opacity:.55"></i></div>
+    <div class="eyebrow">You are invited to a prayer circle</div>
+    <h1 id="name"></h1>
+    <p class="detail" id="members"></p>
+    <p class="detail" style="font-size:16px;color:var(--muted)">A prayer circle is a shared prayer list. Add what is on your heart, tap “I prayed” for each other, and see when God answers.</p>
+    <a class="btn" id="open" href="#">Open in Manna</a>
+    <div>
+      <p class="from" style="margin:8px 0">Or enter this code in Manna, on Pray, Circles, Join</p>
+      <div class="code" id="code"></div>
+    </div>
+    <ol class="steps">
+      <li>No Manna yet? Get it for <a style="color:var(--gold)" href="https://testflight.apple.com/join/JW772nQB">iPhone</a> or <a style="color:var(--gold)" href="/manna/android/">Android</a>.</li>
+      <li>Open Manna, go to <b>Pray</b>, then <b>Circles</b>, then <b>Join with a code</b>.</li>
+    </ol>
+  </section>
+  <p id="gone" class="detail hidden"></p>
+  <div class="get">Manna is a Bible app that finds a verse for whatever today brings.</div>
+</main>
+<script>
+(function () {
+  var URL_ = 'https://uvvtdqltmdzbwchbtvbj.supabase.co/functions/v1/manna-circle';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2dnRkcWx0bWR6YndjaGJ0dmJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MTc1NDgsImV4cCI6MjA5MTk5MzU0OH0.qMHaphQXBRIZ2eZgyYFNEgRszRRM4V5jRSy3kPzLi5c';
+  var code = (location.search || '').replace(/^\?/, '').split('&')[0];
+  var $ = function (id) { return document.getElementById(id); };
+  function fail(m) { $('loading').classList.add('hidden'); $('gone').textContent = m; $('gone').classList.remove('hidden'); }
+  if (!/^[A-Za-z0-9]{6}$/.test(code)) return fail('This invitation link is not complete. Ask your friend to send it again.');
+  fetch(URL_, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + KEY, apikey: KEY }, body: JSON.stringify({ action: 'preview', code: code }) })
+    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      if (r.error) return fail(r.error);
+      $('loading').classList.add('hidden');
+      $('name').textContent = r.name;
+      $('members').textContent = r.members === 1 ? '1 person is in this circle.' : r.members + ' people are in this circle.';
+      $('code').textContent = code;
+      $('open').href = 'manna://join/' + code;
+      $('inv').classList.remove('hidden');
+    }).catch(function () { fail('Could not open this invitation. Check your signal and try again.'); });
+})();
+</script>
+</body>
+</html>

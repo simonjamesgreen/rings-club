@@ -52,6 +52,7 @@ button[disabled]{background:var(--line2);color:var(--muted);cursor:default}
   <p class="count hidden" id="count"></p>
   <p class="verse hidden" id="verse">“Be anxious for nothing, but in everything, by prayer and petition, with thanksgiving, present your requests to God.”<span>Philippians 4:6 · BSB</span></p>
   <p id="gone" class="detail hidden"></p>
+  <p class="count hidden" id="reportrow" style="font-size:13px"><a href="#" id="report" style="color:var(--muted)">Report this request</a></p>
   <div class="get">Shared from <strong>Manna</strong>, a Bible app that finds a verse for whatever today brings. Try it on <a href="https://testflight.apple.com/join/JW772nQB">iPhone</a> or <a href="/manna/android/">Android</a></div>
 </main>
 <script>
@@ -83,10 +84,17 @@ button[disabled]{background:var(--line2);color:var(--muted);cursor:default}
     if (r.from_name) $('from').textContent = 'FROM ' + r.from_name.toUpperCase();
     if (r.answered_note) { $('eyebrow').textContent = 'Thank you for praying'; $('note').textContent = r.answered_note; show('answered'); }
     $('req').classList.remove('hidden');
-    show('pray'); show('verse');
+    show('pray'); show('verse'); show('reportrow');
     count(r.prayed);
     if (getMark() === today()) { $('pray').disabled = true; $('pray').textContent = 'You prayed today ✓'; }
   }).catch(function () { fail('Could not open this prayer request. Check your signal and try again.'); });
+  $('report').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (!window.confirm('Report this prayer request as hurtful, abusive or spam? Manna will review it.')) return;
+    call({ action: 'report', code: code, reason: 'reported on web' }).then(function () {
+      $('reportrow').textContent = 'Thank you. Manna will review this request.';
+    }).catch(function () {});
+  });
   $('pray').addEventListener('click', function () {
     var b = $('pray');
     b.disabled = true; b.textContent = 'Thank you…';
